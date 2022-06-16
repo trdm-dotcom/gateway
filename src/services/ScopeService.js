@@ -1,77 +1,30 @@
 const { ScopeModel } = require('../model/scheme/ScopeScheme');
 const { ScopeGroupModel } = require('../model/scheme/ScopeGroupScheme');
-const { fsStat, fsReadFile } = require('../../promisify');
-const config = require('../../config');
-const fs = require('fs');
 
 const SCOPE_KEY = 'qazxs&&wedc';
 var scopeData = {};
 var scopeDict = null;
 
-function createScopeData() {
-  return {
-    t: new Date().getTime(),
-    scopes: [], //Scope[]
-    scopeDict: new Map(), //id - scope map
-    scopeGroups: [], //ScopeGroup[]
-    scopeGroupMap: new Map(), //{ [k: number]: ScopeGroup }
-    publicScopes: [],
-    scopeApis: [],
-    scopeApiMap: new Map(), //{ [k: number]: OpenAPIV3.OperationObject }
-    unmatchedOpenApiList: [],
-  };
+async function init() {
+  scopeData = await createScopeData();
+  scopeDict = createSortDict(scopeData.scopes);
+  findUnmatchedApi();
 }
 
-async function init() {
-  scopeData = createScopeData();
-  isExist = true;
-  try {
-    await fsStat(config.fileDir.scope);
-  } catch (error) {
-    isExist = false;
-  }
-
-  if (isExist) {
-    console.warn('Scope data file exists => Start server');
-    const buf = await fsReadFile(config.fileDir.scope);
-    scopeData = JSON.parse(buf.toString('utf8'));
-    scopeData.scopeDict = new Map();
-    scopeData.scopeGroupMap = new Map();
-    scopeData.scopeApiMap = new Map();
-    if (scopeData.scopes != null) {
-      scopeData.scopes.forEach((element) => {
-        scopeData.scopeDict.set(element.id, element);
-      });
-    }
-
-    if (scopeData.scopeGroups != null) {
-      scopeData.scopeGroups.forEach((element) => {
-        scopeData.scopeGroupMap.set(element.id, element);
-      });
-    }
-
-    if (scopeData.scopeApis != null) {
-      scopeData.scopeApis.forEach((element) => {
-        scopeData.scopeApiMap.set(element.id, {
-          summary: element.summary,
-          parameters: element.parameters,
-          requestBody: element.requestBody,
-          responses: element.responses,
-          security: element.security,
-          tags: element.tags,
-        });
-      });
-    }
-    updateFromConfServiceRetry()
-      .then(() => {
-        findUnmatchedApi(scopeData);
-      })
-      .catch((err) => console.error(err));
-  } else {
-    console.error(`Scope data file not exists, send request to configuration service`);
-    await updateFromConfServiceRetry();
-    findUnmatchedApi();
-  }
+async function createScopeData() {
+  let scopeDataInit = {
+    t: new Date().getTime(),
+    scopes: [],
+    scopeDict: new Map(),
+    scopeGroups: [],
+    scopeGroupMap: new Map(),
+    scopeApis: [],
+    scopeApiMap: new Map(),
+    unmatchedOpenApiList: [],
+  };
+  await queryScopeGroups(scopeDataInit);
+  await queryScopes(scopeDataInit);
+  return scopeDataInit;
 }
 
 function createSortDict(scopes) {
@@ -118,58 +71,29 @@ function createSortDict(scopes) {
   return sortDict;
 }
 
-async function updateFromConfServiceRetry() {
-  let exist = false;
-  let time = 0;
-  while (!exist) {
-    try {
-      await updateFromConfService();
-      exist = true;
-    } catch (e) {
-      if (time < 100) {
-        console.error('fail to load from conf. will retry', time, e);
-        time++;
-      } else {
-        console.error('fail to load from conf', time);
-      }
-    }
-  }
-  return exist;
-}
-
-async function updateFromConfService() {
-  let scopeDataTemp = createScopeData();
-  await queryScopeGroups(scopeDataTemp);
-  await queryScopes(scopeDataTemp);
-  markPublicScope(scopeDataTemp);
-  scopeData = scopeDataTemp;
-  await saveScopeFile();
-  scopeDict = createSortDict(scopeData.scopes);
-}
-
-async function queryScopeGroups(scopeData) {
+async function queryScopeGroups(scopeDataInit) {
   let data = await ScopeGroupModel.find(
     {},
     { _id: false, id: true, scopeGroupName: true, scopes: true }
   );
   for (let scopeGroup of data) {
     scopeGroup.scopes = [];
-    scopeData.scopeGroupMap.set(scopeGroup.id, scopeGroup);
-    scopeData.scopeGroups.push(scopeGroup);
+    scopeDataInit.scopeGroupMap.set(scopeGroup.id, scopeGroup);
+    scopeDataInit.scopeGroups.push(scopeGroup);
   }
 }
 
-async function queryScopes(scopeData) {
-  let data = await ScopeModel.find({}, { _id: false });
+async function queryScopes(scopeDataInit) {
+  let data = await ScopeModel.find({}, { _id: false, groupIds: false });
   for (let scope of data) {
     processUri(scope);
-    scopeData.scopes.push(scope);
-    scopeData.scopeDict.set(scope.id, scope);
+    scopeDataInit.scopes.push(scope);
+    scopeDataInit.scopeDict.set(scope.id, scope);
     if (scope.groups != null && scope.groups.length > 0) {
       scope.groups.forEach((scopeGroupId) => {
-        let scs = scopeData.scopeGroupMap.get(scopeGroupId);
+        let scs = scopeDataInit.scopeGroupMap.get(scopeGroupId);
         if (scs == null) {
-          scopeData.scopeGroupMap.set(scopeGroupId, {
+          scopeDataInit.scopeGroupMap.set(scopeGroupId, {
             id: scopeGroupId,
             scopeGroupName: 'UNKNOWN',
             scopes: [scope.id],
@@ -198,32 +122,7 @@ function processUri(scope) {
   });
 }
 
-function markPublicScope(scopeData) {
-  let publicScopes = [];
-  let publicScopeGroups = config.scopes.publicScopeGroups;
-  publicScopeGroups.forEach((scopeGroupName) => {
-    let scopeGroup = scopeData.scopeGroups.find((scopeGroup) => {
-      return scopeGroup.scopeGroupName === scopeGroupName;
-    });
-    if (scopeGroup != null) {
-      scopeGroup.scopes.forEach((id) => {
-        const scope = scopeData.scopeDict.get(id);
-        if (scope != null) {
-          scope.isPublic = true;
-          publicScopes.push(scope);
-        }
-      });
-    }
-  });
-}
-
-async function saveScopeFile() {
-  const content = JSON.stringify(scopeData, null, 2);
-  fs.writeFileSync(config.fileDir.scope, content);
-  console.log(`created scope data file at ${config.fileDir.scope} `);
-}
-
-function findUnmatchedApi(scopeData) {
+function findUnmatchedApi() {
   console.log(`total scope ${scopeData.scopes.length}`);
   let unmatchedScope = 0;
   for (let [value, data] of Object.entries(scopeData.scopeDict)) {
