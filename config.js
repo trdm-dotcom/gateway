@@ -5,6 +5,7 @@ const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = '/api/v1';
 
 module.exports = config = {
+  clientId: 'api-gateway',
   cors: {},
   scopes: {
     publicScopeGroups: ['PUBLIC'],
@@ -27,9 +28,15 @@ module.exports = config = {
   fileDir: {
     scope: 'src/data/scopeData.json',
   },
-  rsa: {
-    publicKey: '',
-    privateKey: '',
+  key: {
+    jwt: {
+      publicKey: 'external/key/access_token_public.key',
+      privateKey: 'external/key/access_token_private.key',
+    },
+    rsa: {
+      publicKey: '',
+      privateKey: '',
+    },
   },
   port: process.env.PORT || 3000,
   timeout: process.env.TIMEOUT || 20000,
