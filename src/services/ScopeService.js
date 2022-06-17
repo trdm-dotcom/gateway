@@ -8,7 +8,6 @@ var scopeDict = null;
 async function init() {
   scopeData = await createScopeData();
   scopeDict = createSortDict(scopeData.scopes);
-  findUnmatchedApi();
 }
 
 async function createScopeData() {
@@ -24,11 +23,12 @@ async function createScopeData() {
   };
   await queryScopeGroups(scopeDataInit);
   await queryScopes(scopeDataInit);
+  console.warn('Load scope complete');
   return scopeDataInit;
 }
 
 function createSortDict(scopes) {
-  const sortDict = {};
+  var sortDict = {};
   for (let scope of scopes) {
     let scopeInDict = scopeData.scopeDict.get(scope.id);
     if (scopeInDict != null) {
@@ -72,7 +72,7 @@ function createSortDict(scopes) {
 }
 
 async function queryScopeGroups(scopeDataInit) {
-  let data = await ScopeGroupModel.find(
+  var data = await ScopeGroupModel.find(
     {},
     { _id: false, id: true, scopeGroupName: true, scopes: true }
   );
@@ -84,7 +84,7 @@ async function queryScopeGroups(scopeDataInit) {
 }
 
 async function queryScopes(scopeDataInit) {
-  let data = await ScopeModel.find({}, { _id: false, groupIds: false });
+  var data = await ScopeModel.find({}, { _id: false, groupIds: false });
   for (let scope of data) {
     processUri(scope);
     scopeDataInit.scopes.push(scope);
@@ -107,8 +107,8 @@ async function queryScopes(scopeDataInit) {
 }
 
 function processUri(scope) {
-  const uri = `/${scope.uriPattern.replace(':', '')}`;
-  const parts = uri.split('/');
+  var uri = `/${scope.uriPattern.replace(':', '')}`;
+  var parts = uri.split('/');
   parts.forEach((part) => {
     let p = part;
     if (part.startsWith('{') && part.endsWith('}')) {
@@ -122,32 +122,19 @@ function processUri(scope) {
   });
 }
 
-function findUnmatchedApi() {
-  console.log(`total scope ${scopeData.scopes.length}`);
-  let unmatchedScope = 0;
-  for (let [value, data] of Object.entries(scopeData.scopeDict)) {
-    if (scopeData.scopeApiMap.get(+value) == null) {
-      unmatchedScope++;
-      console.warn(`scope does not have open api: ${data.uriPattern}`);
-    }
-  }
-  console.warn(`total unmatched scope ${unmatchedScope}`);
-}
-
 function findScope(uri, isPublic, scopeGroupIds) {
-  uriParts = uri.split('/').filter((item) => item !== '');
-  const paramNames = [];
-  const paramValues = [];
-  const scope = findScopeUriWithIndex(
+  var uriParts = uri.split('/').filter((item) => item !== '');
+  var paramNames = [];
+  var paramValues = [];
+  var scope = findScopeUriWithIndex(
     uriParts,
-    null,
     paramNames,
     paramValues,
     isPublic,
     scopeGroupIds,
-    null
+    scopeDict
   );
-  const matcher = {
+  var matcher = {
     remainingPathname: '',
     paramNames: paramNames,
     paramValues: paramValues,
@@ -157,11 +144,11 @@ function findScope(uri, isPublic, scopeGroupIds) {
 
 function findScopeUriWithIndex(
   uriParts,
-  scopeDict,
   paramNames,
   paramValues,
   isPublic,
   scopeGroupIds,
+  scopeDict,
   index = 0
 ) {
   if (index === uriParts.length) {
@@ -182,21 +169,21 @@ function findScopeUriWithIndex(
     }
     return undefined;
   }
-
-  let part = uriParts[index];
-  let insideDict = scopeDict[part];
+  var part = uriParts[index];
+  var insideDict = scopeDict[part];
   if (insideDict == null) {
     let pathParams = Object.keys(scopeDict).filter((key) => key.startsWith(':'));
+    console.log(pathParams);
     for (let i = 0; i < pathParams.length; i++) {
       let paramName = pathParams[i];
       insideDict = scopeDict[paramName];
-      let scopeId = this.findScopeUriWithIndex(
+      let scopeId = findScopeUriWithIndex(
         uriParts,
-        insideDict,
         paramNames,
         paramValues,
         isPublic,
         scopeGroupIds,
+        insideDict,
         index + 1
       );
       if (scopeId != null) {
@@ -207,13 +194,13 @@ function findScopeUriWithIndex(
     }
     return undefined;
   } else {
-    return this.findScopeUriWithIndex(
+    return findScopeUriWithIndex(
       uriParts,
-      insideDict,
       paramNames,
       paramValues,
       isPublic,
       scopeGroupIds,
+      insideDict,
       index + 1
     );
   }
