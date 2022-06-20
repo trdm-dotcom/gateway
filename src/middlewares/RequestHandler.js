@@ -1,7 +1,13 @@
 const config = require('../../config');
 const scopeService = require('../services/ScopeService');
 const jwt = require('jsonwebtoken');
-const { getKey, getLanguageCode, convertToken } = require('../utils/Utils');
+const {
+  getKey,
+  getLanguageCode,
+  convertToken,
+  generateToken,
+  rsaDecrype,
+} = require('../utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
 const prefix = `${new Date().getTime()}-${config.clientId}`;
 
@@ -29,20 +35,20 @@ async function doRequestHandler(messageId, req, res, languageCode) {
       const body = req.body;
       fieldEncryptArr.forEach((field) => {
         if (body[field] != null && typeof body[field] === 'string') {
-          body[field] = Utils.rsaEncrypt(body[field], config.rsa.publicKey);
+          body[field] = rsaDecrype(body[field], config.key.rsa.privateKey);
         }
       });
     }
   }
   switch (uri) {
     case '/post/api/v1/login' || '/post/api/v1/socialLogin':
-      return null;
       break;
     case '/post/api/v1/refreshToken':
-      return null;
-      break;
+      let payload = req.body;
+      let key = getKey(config.key.jwt.privateKey);
+      let token = generateToken(payload, key, 3600);
+      return res.status(200).send({ accessToken: token });
     case '/post/api/v1/revokeToken':
-      return null;
       break;
   }
   return checkToken(messageId, languageCode, uri, req, res);
@@ -52,29 +58,27 @@ async function checkToken(messageId, languageCode, uri, req, res) {
   let accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
     console.warn(messageId, 'no prefix in authorization header', uri);
-    returnCode(res, 401, 'UNAUTHORIZED');
-    return null;
+    return returnCode(res, 401, 'UNAUTHORIZED');
   }
   if (accessToken.length === 0) {
     console.warn(messageId, 'access token length 0', uri);
-    returnCode(res, 401, 'UNAUTHORIZED');
-    return null;
+    return returnCode(res, 401, 'UNAUTHORIZED');
   }
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
   var payload;
   try {
-    let key = await getKey(config.key.jwt.publicKey);
-    payload = jwt.verify(token, key, { algorithms: ['RS256'] });
+    let key = getKey(config.key.jwt.privateKey);
+    payload = jwt.verify(accessToken, key, { algorithms: 'RS256' });
   } catch {
-    returnCode(res, 401, 'UNAUTHORIZED');
-    return null;
+    console.warn(messageId, 'unauthorized ', uri);
+    return returnCode(res, 401, 'UNAUTHORIZED');
   }
-  payload = convertToken(accessToken);
-  const [scope, matcher] = scopeService.findScope(uri, true);
+  let token = convertToken(accessToken);
+  let refreshTokenId = payload.refreshTokenId;
+  let [scope, matcher] = scopeService.findScope(uri, true);
   if (scope == null) {
     console.warn(messageId, refreshTokenId, 'not found any private scope', uri);
-    returnCode(res, 404, 'URI_NOT_FOUND');
-    return null;
+    return returnCode(res, 404, 'URI_NOT_FOUND');
   }
   var body = req.body;
   Object.keys(req.query).forEach((queryParam) => {
@@ -116,6 +120,26 @@ async function checkToken(messageId, languageCode, uri, req, res) {
     body.sourceIp = ip;
   }
   body.deviceType = req.device.type;
+  let forwardResult = {
+    uri: scope.forwardData.uri,
+    topic: scope.forwardData.service,
+  };
+  return doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body);
+}
+
+function doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body) {
+  logMsg = `${messageId} rId:${refreshTokenId} forward request ${req.path} to ${forwardResult.topic}:${forwardResult.uri}`;
+  console.log(logMsg);
+  let time = process.hrtime();
+  try {
+  } catch (error) {
+    time = process.hrtime(time);
+    console.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
+  }
+  time = process.hrtime(time);
+  console.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
+  let data = null;
+  res.status(200).send(data);
 }
 
 function checkIfValidIPV6(ip) {

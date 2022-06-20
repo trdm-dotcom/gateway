@@ -34,8 +34,8 @@ module.exports = config = {
       privateKey: 'external/key/access_token_private.key',
     },
     rsa: {
-      publicKey: '',
-      privateKey: '',
+      publicKey: 'external/key/rsa_public.key',
+      privateKey: 'external/key/rsa_private.key',
     },
   },
   port: process.env.PORT || 3000,
@@ -43,5 +43,8 @@ module.exports = config = {
   mongo: {
     url: process.env.MONGODB_URI || 'mongodb://localhost:27017/api_gateway',
     options: {},
+  },
+  accessToken: {
+    expiredInSeconds: 86400,
   },
 };
