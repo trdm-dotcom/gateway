@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const acceptLanguage = require('accept-language');
 const config = require('../../config');
-const forwardType = require('../constraint/ForwardType');
+const i18n = require('i18next');
 acceptLanguage.languages(['en', 'vi']);
 
 const MULTI_ENCRYPTION_PART_PREFIX = '';
@@ -65,7 +65,11 @@ function generateToken(payload, key, expiredInSeconds) {
 }
 
 function getLanguageCode(code) {
-  acceptLanguage.get(code);
+  try {
+    return acceptLanguage.get(code);
+  } catch (e) {
+    return 'vi';
+  }
 }
 
 function convertToken(token) {
@@ -89,6 +93,10 @@ function undefinedOr(data) {
   return data;
 }
 
+function getI18nInstance() {
+  return i18n;
+}
+
 module.exports = {
   rsaEncrypt,
   rsaDecrype,
@@ -96,4 +104,5 @@ module.exports = {
   getLanguageCode,
   convertToken,
   generateToken,
+  getI18nInstance,
 };

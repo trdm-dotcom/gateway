@@ -7,11 +7,12 @@ const {
   convertToken,
   generateToken,
   rsaDecrype,
+  getI18nInstance,
 } = require('../utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
 const prefix = `${new Date().getTime()}-${config.clientId}`;
-
-let messageId = 0;
+const i18n = getI18nInstance();
+var messageId = 0;
 
 function getMessageId() {
   messageId++;
@@ -20,8 +21,10 @@ function getMessageId() {
 
 function requestHandler(req, res, next) {
   let messageId = getMessageId();
-  let languageCode = def(first(first(req.headers['accept-language']), 'vi'));
-  doRequestHandler(messageId, req, res, languageCode);
+  let languageCode = def(first(req.headers['accept-language']), 'vi');
+  doRequestHandler(messageId, req, res, languageCode).catch((error) =>
+    handleError(languageCode, error, req, res)
+  );
 }
 
 async function doRequestHandler(messageId, req, res, languageCode) {
@@ -169,7 +172,25 @@ function first(s) {
 }
 
 function returnCode(res, status, code) {
-  res.status(status).send({ code, message: code });
+  res.status(status).send({ code, message: i18n.t(code) });
+}
+
+function handleError(language, error, req, res) {
+  console.error('error on handler request', req.path, req.method, error);
+  if (error instanceof Errors.GeneralError) {
+    let code = error.code;
+    let status = config.responseCode[code];
+    if (status != null) {
+      return res.status(status).send(error.toStatus());
+    } else {
+      return res.status(400).send(error.toStatus());
+    }
+  } else {
+    return res.status(500).send({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: i18n.t('INTERNAL_SERVER_ERROR', { lng: language }),
+    });
+  }
 }
 
 module.exports = {
