@@ -42,6 +42,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
   }
   switch (uri) {
     case '/post/api/v1/login' || '/post/api/v1/socialLogin':
+      return null;
       break;
     case '/post/api/v1/refreshToken':
       let payload = req.body;
@@ -49,6 +50,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
       let token = generateToken(payload, key, 3600);
       return res.status(200).send({ accessToken: token });
     case '/post/api/v1/revokeToken':
+      return null;
       break;
   }
   return checkToken(messageId, languageCode, uri, req, res);
