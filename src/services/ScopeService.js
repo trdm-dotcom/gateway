@@ -1,6 +1,6 @@
 const { ScopeModel } = require('../model/scheme/ScopeScheme');
 const { ScopeGroupModel } = require('../model/scheme/ScopeGroupScheme');
-
+const { Logger } = require('common');
 const SCOPE_KEY = 'qazxs&&wedc';
 var scopeData = {};
 var scopeDict = null;
@@ -23,7 +23,7 @@ async function createScopeData() {
   };
   await queryScopeGroups(scopeDataInit);
   await queryScopes(scopeDataInit);
-  console.warn('Load scope complete');
+  Logger.warn('Load scope complete');
   return scopeDataInit;
 }
 
@@ -173,7 +173,7 @@ function findScopeUriWithIndex(
   var insideDict = scopeDict[part];
   if (insideDict == null) {
     let pathParams = Object.keys(scopeDict).filter((key) => key.startsWith(':'));
-    console.log(pathParams);
+    Logger.info(pathParams);
     for (let i = 0; i < pathParams.length; i++) {
       let paramName = pathParams[i];
       insideDict = scopeDict[paramName];

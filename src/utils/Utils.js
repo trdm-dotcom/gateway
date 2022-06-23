@@ -5,12 +5,13 @@ const acceptLanguage = require('accept-language');
 const config = require('../../config');
 const i18n = require('i18next');
 acceptLanguage.languages(['en', 'vi']);
+const uuid = require('uuid');
 
 const MULTI_ENCRYPTION_PART_PREFIX = '';
 
 async function rsaEncrypt(data, pathPublicKey) {
+  let key = getKey(pathPublicKey);
   try {
-    let key = getKey(pathPublicKey);
     return encrypt(data, key);
   } catch (error) {
     if (e.message != null && e.message.indexOf('data too large for key size') >= 0) {
@@ -18,7 +19,7 @@ async function rsaEncrypt(data, pathPublicKey) {
       let index = 0;
       while (index < data.length) {
         const part = data.substr(index, Math.min(100, data.length - index));
-        encryption += `.${rsaEncryptShort(part, publicKey)}`;
+        encryption += `.${encrypt(part, key)}`;
         index += 100;
       }
       return encryption;
@@ -39,7 +40,7 @@ async function rsaDecrype(data, pathPrivateKey) {
     const parts = data.split('.');
     let result = '';
     for (let i = 1; i < parts.length; i++) {
-      result += rsaDecryptShort(parts[i], privateKey);
+      result += decrypt(parts[i], key);
     }
     return result;
   } else {
@@ -59,6 +60,10 @@ function getKey(filename) {
 
 function generateToken(payload, key, expiredInSeconds) {
   return jwt.sign(payload, key, {
+    header: {
+      kid: uuid.v4(),
+    },
+    issuer: config.accessToken.issuer,
     expiresIn: expiredInSeconds || config.accessToken.expiredInSeconds,
     algorithm: 'RS256',
   });

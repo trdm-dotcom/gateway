@@ -5,6 +5,7 @@ const device = require('express-device');
 const config = require('./config');
 const connection = require('./src/db/connection');
 const { requestHandler } = require('./src/middlewares/RequestHandler');
+const { Logger } = require('common');
 
 async function initServer() {
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -13,7 +14,7 @@ async function initServer() {
   app.use(requestHandler);
   await connection.init();
   app.listen(config.port, () => {
-    console.log('Server Start!');
+    Logger.info('Server Start!');
   });
 }
 

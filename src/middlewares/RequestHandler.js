@@ -1,5 +1,6 @@
 const config = require('../../config');
 const scopeService = require('../services/ScopeService');
+const { Errors, Logger } = require('common');
 const jwt = require('jsonwebtoken');
 const {
   getKey,
@@ -10,7 +11,7 @@ const {
   getI18nInstance,
 } = require('../utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
-const prefix = `${new Date().getTime()}-${config.clientId}`;
+const prefix = `${new Date().getTime()}-${config.clusterId}`;
 const i18n = getI18nInstance();
 var messageId = 0;
 
@@ -30,7 +31,7 @@ function requestHandler(req, res, next) {
 async function doRequestHandler(messageId, req, res, languageCode) {
   let uri = `/${req.method.toLowerCase()}${req.path}`;
   if (config.enableDebug) {
-    console.log(messageId, 'request', uri);
+    Logger.info(messageId, 'request', uri);
   }
   if (config.enableEncryptPassword === true) {
     let fieldEncryptArr = config.encryptPassword[uri];
@@ -60,11 +61,11 @@ async function doRequestHandler(messageId, req, res, languageCode) {
 async function checkToken(messageId, languageCode, uri, req, res) {
   let accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
-    console.warn(messageId, 'no prefix in authorization header', uri);
+    Logger.warn(messageId, 'no prefix in authorization header', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');
   }
   if (accessToken.length === 0) {
-    console.warn(messageId, 'access token length 0', uri);
+    Logger.warn(messageId, 'access token length 0', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');
   }
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
@@ -73,14 +74,14 @@ async function checkToken(messageId, languageCode, uri, req, res) {
     let key = getKey(config.key.jwt.privateKey);
     payload = jwt.verify(accessToken, key, { algorithms: 'RS256' });
   } catch {
-    console.warn(messageId, 'unauthorized ', uri);
+    Logger.warn(messageId, 'unauthorized ', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');
   }
   let token = convertToken(accessToken);
   let refreshTokenId = payload.refreshTokenId;
   let [scope, matcher] = scopeService.findScope(uri, true);
   if (scope == null) {
-    console.warn(messageId, refreshTokenId, 'not found any private scope', uri);
+    Logger.warn(messageId, refreshTokenId, 'not found any private scope', uri);
     return returnCode(res, 404, 'URI_NOT_FOUND');
   }
   var body = req.body;
@@ -93,7 +94,7 @@ async function checkToken(messageId, languageCode, uri, req, res) {
         if (i < matcher.paramValues.length) {
           body[matcher.paramNames[i]] = matcher.paramValues[i];
         } else {
-          console.error(
+          Logger.error(
             'lack of param',
             req.path,
             scope.processedPattern,
@@ -132,15 +133,15 @@ async function checkToken(messageId, languageCode, uri, req, res) {
 
 function doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body) {
   logMsg = `${messageId} rId:${refreshTokenId} forward request ${req.path} to ${forwardResult.topic}:${forwardResult.uri}`;
-  console.log(logMsg);
+  Logger.info(logMsg);
   let time = process.hrtime();
   try {
   } catch (error) {
     time = process.hrtime(time);
-    console.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
+    Logger.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
   }
   time = process.hrtime(time);
-  console.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
+  Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
   let data = null;
   res.status(200).send(data);
 }
@@ -176,7 +177,7 @@ function returnCode(res, status, code) {
 }
 
 function handleError(language, error, req, res) {
-  console.error('error on handler request', req.path, req.method, error);
+  Logger.error('error on handler request', req.path, req.method, error);
   if (error instanceof Errors.GeneralError) {
     let code = error.code;
     let status = config.responseCode[code];

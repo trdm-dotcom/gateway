@@ -108,3 +108,4 @@ mongo/
 .vscode/
 external/
 src/data/
+logs/
