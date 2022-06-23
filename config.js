@@ -5,10 +5,29 @@ const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = '/api/v1';
 
 module.exports = config = {
-  clientId: 'api-gateway',
+  clusterId: 'api-gateway',
+  clientId: nodeId,
+  basePath: basePath,
   cors: {},
   scopes: {
     publicScopeGroups: ['PUBLIC'],
+  },
+  logger: {
+    config: {
+      appenders: {
+        application: { type: 'console' },
+        file: {
+          type: 'file',
+          filename: 'logs/application.log',
+          compression: true,
+          maxLogSize: 104857600,
+          backups: 10,
+        },
+      },
+      categories: {
+        default: { appenders: ['application', 'file'], level: 'info' },
+      },
+    },
   },
   responseCode: {
     TOKEN_EXPIRED: 401,
@@ -46,5 +65,6 @@ module.exports = config = {
   },
   accessToken: {
     expiredInSeconds: 86400,
+    issuer: 'app',
   },
 };
