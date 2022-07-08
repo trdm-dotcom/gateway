@@ -34,7 +34,7 @@ function encrypt(data, key) {
   return encrypt.toString('base64');
 }
 
-async function rsaDecrype(data, pathPrivateKey) {
+async function rsaDecrypt(data, pathPrivateKey) {
   let key = getKey(pathPrivateKey);
   if (data.startsWith(`${MULTI_ENCRYPTION_PART_PREFIX}`)) {
     const parts = data.split('.');
@@ -104,7 +104,7 @@ function getI18nInstance() {
 
 module.exports = {
   rsaEncrypt,
-  rsaDecrype,
+  rsaDecrypt,
   getKey,
   getLanguageCode,
   convertToken,
