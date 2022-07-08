@@ -7,7 +7,7 @@ const {
   getKey,
   getLanguageCode,
   convertToken,
-  rsaDecrype,
+  rsaDecrypt,
   getI18nInstance,
 } = require('../utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
@@ -39,7 +39,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
       const body = req.body;
       fieldEncryptArr.forEach((field) => {
         if (body[field] != null && typeof body[field] === 'string') {
-          body[field] = rsaDecrype(body[field], config.key.rsa.privateKey);
+          body[field] = rsaDecrypt(body[field], config.key.rsa.privateKey);
         }
       });
     }
