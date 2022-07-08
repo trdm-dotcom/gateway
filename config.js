@@ -3,10 +3,10 @@ const uuid = require('uuid');
 
 const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = '/api/v1';
-
 module.exports = config = {
   clusterId: 'api-gateway',
   clientId: nodeId,
+  kafkaUrls: ['localhost:9092'],
   basePath: basePath,
   cors: {},
   scopes: {
@@ -57,10 +57,10 @@ module.exports = config = {
       privateKey: 'external/key/rsa_private.key',
     },
   },
-  port: process.env.PORT || 3000,
-  timeout: process.env.TIMEOUT || 20000,
+  port: 3000,
+  timeout: 20000,
   mongo: {
-    url: process.env.MONGODB_URI || 'mongodb://localhost:27017/api_gateway',
+    url: 'mongodb://localhost:27017/api_gateway',
     options: {},
   },
   accessToken: {

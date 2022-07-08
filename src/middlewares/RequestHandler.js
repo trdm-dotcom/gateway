@@ -1,12 +1,12 @@
 const config = require('../../config');
 const scopeService = require('../services/ScopeService');
-const { Errors, Logger } = require('common');
+const { Errors, Logger, Kafka } = require('common');
+const { refreshAccessToken, revokeToken } = require('../services/TokenService');
 const jwt = require('jsonwebtoken');
 const {
   getKey,
   getLanguageCode,
   convertToken,
-  generateToken,
   rsaDecrype,
   getI18nInstance,
 } = require('../utils/Utils');
@@ -45,17 +45,25 @@ async function doRequestHandler(messageId, req, res, languageCode) {
     }
   }
   switch (uri) {
-    case '/post/api/v1/login' || '/post/api/v1/socialLogin':
-      return null;
+    case '/post/api/v1/login' || '/post/api/v1/socialLogin' || '/post/api/v1/register':
+      return doSendRequest(
+        messageId,
+        null,
+        req,
+        res,
+        {
+          topic: 'user',
+          uri,
+        },
+        req.body
+      );
     case '/post/api/v1/refreshToken':
-      let payload = req.body;
-      let key = getKey(config.key.jwt.privateKey);
-      let token = generateToken(payload, key, 3600);
-      return res.status(200).send({ accessToken: token });
+      return refreshAccessToken(req, res);
     case '/post/api/v1/revokeToken':
-      return null;
+      return revokeToken(req, res);
+    default:
+      return checkToken(messageId, languageCode, uri, req, res);
   }
-  return checkToken(messageId, languageCode, uri, req, res);
 }
 
 async function checkToken(messageId, languageCode, uri, req, res) {
@@ -112,44 +120,34 @@ async function checkToken(messageId, languageCode, uri, req, res) {
     body.headers.token = token;
   }
   body.headers['accept-language'] = getLanguageCode(languageCode);
-  let ip = first([
-    first(req.headers['tx-source-ip']),
-    first(req.headers['x-forwarded-for']),
-    first(req.connection.remoteAddress),
-  ]);
-  if (ip != null) {
-    if (!checkIfValidIPV6(ip)) {
-      body.sourceIp = ip.replace(/^.*:/, '');
-    }
-    body.sourceIp = ip;
-  }
-  body.deviceType = req.device.type;
   let forwardResult = {
     uri: scope.forwardData.uri,
     topic: scope.forwardData.service,
   };
-  return doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body);
+  return await doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body);
 }
 
-function doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body) {
+async function doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body) {
   logMsg = `${messageId} rId:${refreshTokenId} forward request ${req.path} to ${forwardResult.topic}:${forwardResult.uri}`;
   Logger.info(logMsg);
   let time = process.hrtime();
   try {
+    let responseMsg = await Kafka.getInstance().sendRequestAsync(
+      `${new Date().getTime()}-${messageId}`,
+      forwardResult.topic,
+      forwardResult.uri,
+      body,
+      config.timeout
+    );
+    time = process.hrtime(time);
+    Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
+    const data = Kafka.getResponse(responseMsg);
+    return res.status(200).send(data);
   } catch (error) {
     time = process.hrtime(time);
     Logger.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
+    throw e;
   }
-  time = process.hrtime(time);
-  Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
-  let data = null;
-  res.status(200).send(data);
-}
-
-function checkIfValidIPV6(ip) {
-  const regex =
-    /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))/;
-  return regex.test(ip);
 }
 
 function def(data, def) {

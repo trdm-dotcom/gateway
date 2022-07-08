@@ -12,7 +12,7 @@
   "dependencies": {
     "accept-language": "^3.0.18",
     "body-parser": "^1.20.0",
-    "common": "file:../common",
+    "common": "github:trdm-dotcom/common#main",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
@@ -20,7 +20,7 @@
     "i18next": "^21.8.10",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.3.6",
-    "morgan": "^1.10.0",
+    "tslib": "^2.4.0",
     "uuid": "^8.3.2"
   }
 }
