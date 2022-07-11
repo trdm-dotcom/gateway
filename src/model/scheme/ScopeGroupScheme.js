@@ -11,7 +11,7 @@ const ScopeGroupSchema = new Schema({
   scopeIds: [Number],
 });
 
-const ScopeGroupModel = mongoose.model('c_scope_groups', ScopeGroupSchema);
+const ScopeGroupModel = mongoose.model('ScopeGroupModel', ScopeGroupSchema);
 
 module.exports = {
   ScopeGroupModel,

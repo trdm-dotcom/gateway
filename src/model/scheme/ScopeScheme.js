@@ -19,7 +19,7 @@ const ScopeSchema = new Schema({
   isPublic: Boolean,
 });
 
-const ScopeModel = mongoose.model('c_scopes', ScopeSchema);
+const ScopeModel = mongoose.model('ScopeModel', ScopeSchema);
 
 module.exports = {
   ScopeModel,
