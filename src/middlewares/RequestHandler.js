@@ -7,8 +7,8 @@ const {
   getKey,
   getLanguageCode,
   convertToken,
-  rsaDecrypt,
   getI18nInstance,
+  rsaEncrypt,
 } = require('../utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
 const prefix = `${new Date().getTime()}-${config.clusterId}`;
@@ -39,14 +39,16 @@ async function doRequestHandler(messageId, req, res, languageCode) {
       const body = req.body;
       fieldEncryptArr.forEach((field) => {
         if (body[field] != null && typeof body[field] === 'string') {
-          body[field] = rsaDecrypt(body[field], config.key.rsa.privateKey);
+          body[field] = rsaEncrypt(body[field], config.key.rsa.privateKey);
         }
       });
     }
   }
   switch (uri) {
-    case '/post/api/v1/login' || '/post/api/v1/socialLogin' || '/post/api/v1/register':
-      return doSendRequest(
+    case '/post/api/v1/login':
+    case '/post/api/v1/socialLogin':
+    case '/post/api/v1/register':
+      return await doSendRequest(
         messageId,
         null,
         req,
@@ -58,11 +60,24 @@ async function doRequestHandler(messageId, req, res, languageCode) {
         req.body
       );
     case '/post/api/v1/refreshToken':
-      return refreshAccessToken(req, res);
+      return await refreshAccessToken(req, res);
     case '/post/api/v1/revokeToken':
-      return revokeToken(req, res);
+      return await revokeToken(req, res);
+    case '/post/api/v1/otp':
+    case '/post/api/v1/otp/verify':
+      return await doSendRequest(
+        messageId,
+        null,
+        req,
+        res,
+        {
+          topic: 'otp',
+          uri,
+        },
+        req.body
+      );
     default:
-      return checkToken(messageId, languageCode, uri, req, res);
+      return await checkToken(messageId, languageCode, uri, req, res);
   }
 }
 
@@ -122,7 +137,7 @@ async function checkToken(messageId, languageCode, uri, req, res) {
   body.headers['accept-language'] = getLanguageCode(languageCode);
   let forwardResult = {
     uri: scope.forwardData.uri,
-    topic: scope.forwardData.service,
+    topic: scope.forwardData.service.toLowerCase(),
   };
   return await doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body);
 }
