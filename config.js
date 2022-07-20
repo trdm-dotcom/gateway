@@ -18,7 +18,7 @@ module.exports = config = {
         application: { type: 'console' },
         file: {
           type: 'file',
-          filename: 'logs/application.log',
+          filename: './../logs/api_gateway/application.log',
           compression: true,
           maxLogSize: 104857600,
           backups: 10,
@@ -39,8 +39,8 @@ module.exports = config = {
   },
   enableEncryptPassword: true,
   encryptPassword: {
-    '/post/api/v1/user/login': ['password'],
-    '/post/api/v1/user/register': ['password'],
+    '/post/api/v1/login': ['password'],
+    '/post/api/v1/register': ['password'],
     '/post/api/v1/user/resetPassword': ['password'],
     '/post/api/v1/user/changePassword': ['oldpass', 'newpass'],
   },

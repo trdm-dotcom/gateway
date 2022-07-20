@@ -7,9 +7,9 @@ const i18n = require('i18next');
 acceptLanguage.languages(['en', 'vi']);
 const uuid = require('uuid');
 
-const MULTI_ENCRYPTION_PART_PREFIX = '';
+const MULTI_ENCRYPTION_PART_PREFIX = 'mutipart';
 
-async function rsaEncrypt(data, pathPublicKey) {
+function rsaEncrypt(data, pathPublicKey) {
   let key = getKey(pathPublicKey);
   try {
     return encrypt(data, key);
@@ -34,7 +34,7 @@ function encrypt(data, key) {
   return encrypt.toString('base64');
 }
 
-async function rsaDecrypt(data, pathPrivateKey) {
+function rsaDecrypt(data, pathPrivateKey) {
   let key = getKey(pathPrivateKey);
   if (data.startsWith(`${MULTI_ENCRYPTION_PART_PREFIX}`)) {
     const parts = data.split('.');
