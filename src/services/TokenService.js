@@ -1,5 +1,6 @@
 const { Errors, Utils } = require('common');
 const { getKey, generateToken } = require('../utils/Utils');
+const config = require('../../config');
 
 async function refreshAccessToken(req, res) {
   // const invalidParams = new Errors.InvalidParameterError();

@@ -10,7 +10,7 @@ const { Logger, Kafka } = require('common');
 const cors = require('cors');
 
 Logger.create(config.logger.config, true);
-Kafka.create(config, {}, true);
+Logger.info('staring...');
 
 async function initServer() {
   app.use('/assets', express.static('assets'));
@@ -19,6 +19,19 @@ async function initServer() {
   app.use(cors(config.cors));
   app.use(verifyFormat);
   app.use(device.capture());
+  await Kafka.create(
+    config,
+    true,
+    null,
+    {
+      serviceName: config.clusterId,
+      nodeId: config.nodeId,
+    },
+    config.kafkaProducerOptions,
+    {},
+    config.kafkaConsumerOptions,
+    {},
+  );
   app.use(requestHandler);
   mongoose.connect(config.mongo.url, config.mongo.options)
   .then(() => Logger.info('connected to mongo!'));

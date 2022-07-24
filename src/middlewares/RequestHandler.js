@@ -48,40 +48,19 @@ async function doRequestHandler(messageId, req, res, languageCode) {
     case '/post/api/v1/login':
     case '/post/api/v1/socialLogin':
     case '/post/api/v1/register':
-      return await doSendRequest(
-        messageId,
-        null,
-        req,
-        res,
-        {
-          topic: 'user',
-          uri,
-        },
-        req.body
-      );
-    case '/post/api/v1/refreshToken':
-      return await refreshAccessToken(req, res);
-    case '/post/api/v1/revokeToken':
-      return await revokeToken(req, res);
     case '/post/api/v1/otp':
     case '/post/api/v1/otp/verify':
-      return await doSendRequest(
-        messageId,
-        null,
-        req,
-        res,
-        {
-          topic: 'otp',
-          uri,
-        },
-        req.body
-      );
+      return forwardRequest(messageId, req, res, uri, languageCode);
+    case '/post/api/v1/refreshToken':
+      return refreshAccessToken(req, res);
+    case '/post/api/v1/revokeToken':
+      return revokeToken(req, res);
     default:
-      return await checkToken(messageId, languageCode, uri, req, res);
+      return checkToken(messageId, languageCode, uri, req, res);
   }
 }
 
-async function checkToken(messageId, languageCode, uri, req, res) {
+function checkToken(messageId, languageCode, uri, req, res) {
   let accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
     Logger.warn(messageId, 'no prefix in authorization header', uri);
@@ -102,48 +81,11 @@ async function checkToken(messageId, languageCode, uri, req, res) {
   }
   let token = convertToken(accessToken);
   let refreshTokenId = payload.refreshTokenId;
-  let [scope, matcher] = scopeService.findScope(uri, true);
-  if (scope == null) {
-    Logger.warn(messageId, refreshTokenId, 'not found any private scope', uri);
-    return returnCode(res, 404, 'URI_NOT_FOUND');
-  }
-  var body = req.body;
-  Object.keys(req.query).forEach((queryParam) => {
-    body[queryParam] = req.query[queryParam];
-  });
-  if (matcher != null) {
-    if (matcher.paramNames != null) {
-      for (let i = 0; i < matcher.paramNames.length; i++) {
-        if (i < matcher.paramValues.length) {
-          body[matcher.paramNames[i]] = matcher.paramValues[i];
-        } else {
-          Logger.error(
-            'lack of param',
-            req.path,
-            scope.processedPattern,
-            scope.uriPattern,
-            matcher
-          );
-        }
-      }
-    }
-  }
-  if (body.headers == null) {
-    body.headers = {};
-  }
-  if (token != null) {
-    body.headers.token = token;
-  }
-  body.headers['accept-language'] = getLanguageCode(languageCode);
-  let forwardResult = {
-    uri: scope.forwardData.uri,
-    topic: scope.forwardData.service.toLowerCase(),
-  };
-  return await doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body);
+  forwardRequest(messageId, req, res, uri, languageCode, token, refreshTokenId);
 }
 
-async function doSendRequest(messageId, refreshTokenId, req, res, forwardResult, body) {
-  logMsg = `${messageId} rId:${refreshTokenId} forward request ${req.path} to ${forwardResult.topic}:${forwardResult.uri}`;
+async function doSendRequest(messageId, req, res, forwardResult, body) {
+  logMsg = `${messageId} forward request ${req.path} to ${forwardResult.topic}: ${forwardResult.uri}`;
   Logger.info(logMsg);
   let time = process.hrtime();
   try {
@@ -158,10 +100,9 @@ async function doSendRequest(messageId, refreshTokenId, req, res, forwardResult,
     Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
     const data = Kafka.getResponse(responseMsg);
     return res.status(200).send(data);
-  } catch (error) {
+  } catch (e) {
     time = process.hrtime(time);
     Logger.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
-    throw e;
   }
 }
 
@@ -205,6 +146,46 @@ function handleError(language, error, req, res) {
       message: i18n.t('INTERNAL_SERVER_ERROR', { lng: language }),
     });
   }
+}
+
+function forwardRequest(messageId, req, res, uri, languageCode, token, refreshTokenId){
+  let [scope, matcher] = scopeService.findScope(uri, true);
+  if (scope == null) {
+    return returnCode(res, 404, 'URI_NOT_FOUND');
+  }
+  var body = req.body;
+  Object.keys(req.query).forEach((queryParam) => {
+    body[queryParam] = req.query[queryParam];
+  });
+  if (matcher != null) {
+    if (matcher.paramNames != null) {
+      for (let i = 0; i < matcher.paramNames.length; i++) {
+        if (i < matcher.paramValues.length) {
+          body[matcher.paramNames[i]] = matcher.paramValues[i];
+        } else {
+          Logger.error(
+            'lack of param',
+            req.path,
+            scope.processedPattern,
+            scope.uriPattern,
+            matcher
+          );
+        }
+      }
+    }
+  }
+  if (body.headers == null) {
+    body.headers = {};
+  }
+  if (token != null) {
+    body.headers.token = token;
+  }
+  body.headers['accept-language'] = getLanguageCode(languageCode);
+  let forwardResult = {
+    uri: scope.forwardData.uri,
+    topic: scope.forwardData.service.toLowerCase(),
+  };
+  return doSendRequest(messageId, req, res, forwardResult, body);
 }
 
 module.exports = {

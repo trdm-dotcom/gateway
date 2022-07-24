@@ -3,10 +3,16 @@ const uuid = require('uuid');
 
 const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = '/api/v1';
-module.exports = config = {
-  clusterId: 'api-gateway',
+let config = {
+  clusterId: 'gateway',
   clientId: nodeId,
   kafkaUrls: ['localhost:9092'],
+  kafkaUrls: ['localhost:9092'],
+  kafkaCommonOptions: {},
+  kafkaConsumerOptions: {},
+  kafkaProducerOptions: {},
+  kafkaTopicOptions: {},
+  requestHandlerTopics: [],
   basePath: basePath,
   cors: {},
   scopes: {
@@ -68,3 +74,18 @@ module.exports = config = {
     issuer: 'app',
   },
 };
+
+config.kafkaConsumerOptions = {
+  ...(config.kafkaCommonOptions ? config.kafkaCommonOptions : {}),
+  ...(config.kafkaConsumerOptions ? config.kafkaConsumerOptions : {}),
+};
+config.kafkaProducerOptions = {
+  ...(config.kafkaCommonOptions ? config.kafkaCommonOptions : {}),
+  ...(config.kafkaProducerOptions ? config.kafkaProducerOptions : {}),
+};
+
+if (config.requestHandlerTopics.length == 0) {
+  config.requestHandlerTopics.push(config.clusterId);
+}
+
+module.exports = config;
