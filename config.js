@@ -7,7 +7,6 @@ let config = {
   clusterId: 'gateway',
   clientId: nodeId,
   kafkaUrls: ['localhost:9092'],
-  kafkaUrls: ['localhost:9092'],
   kafkaCommonOptions: {},
   kafkaConsumerOptions: {},
   kafkaProducerOptions: {},
@@ -70,9 +69,18 @@ let config = {
     options: {},
   },
   accessToken: {
-    expiredInSeconds: 86400,
-    issuer: 'app',
+    expiredInSeconds: 900,
+    issuer: 'Homer',
   },
+  refreshToken: {
+    expiredInSeconds: 86400,
+    expiredInSecondsWithRememberMe: 2592000,
+  },
+  google: {
+    clientId: '828790616262-hs95un5i5le2ttlbj0sa6t36tapsvmqb.apps.googleusercontent.com',
+    clientSecret: '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',
+    callbackURL: '/google/callback'
+  }
 };
 
 config.kafkaConsumerOptions = {
