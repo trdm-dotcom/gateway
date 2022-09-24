@@ -4,7 +4,6 @@ function verifyFormat(req, res, next) {
     req.body = {};
     req.body.items = items;
   }
-
   next();
 }
 

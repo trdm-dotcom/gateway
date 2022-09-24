@@ -1,16 +1,21 @@
-const config = require('../../config');
-const scopeService = require('../services/ScopeService');
-const { Errors, Logger, Kafka } = require('common');
-const { refreshAccessToken, revokeToken } = require('../services/TokenService');
-const jwt = require('jsonwebtoken');
+const config = require("../../config");
+const { Errors, Logger, Kafka } = require("common");
+const { refreshAccessToken, revokeToken } = require("../services/TokenService");
+const jwt = require("jsonwebtoken");
 const {
   getKey,
-  getLanguageCode,
   convertToken,
   getI18nInstance,
   rsaEncrypt,
-} = require('../utils/Utils');
-const TOKEN_PREFIX = 'jwt ';
+  returnCode,
+  buildDataRequest,
+  def,
+  first,
+} = require("../utils/Utils");
+
+const authentication = require("./../services/AuthenticationService");
+
+const TOKEN_PREFIX = "jwt ";
 const prefix = `${new Date().getTime()}-${config.clusterId}`;
 const i18n = getI18nInstance();
 var messageId = 0;
@@ -22,116 +27,71 @@ function getMessageId() {
 
 function requestHandler(req, res, next) {
   let messageId = getMessageId();
-  let languageCode = def(first(req.headers['accept-language']), 'vi');
-  doRequestHandler(messageId, req, res, languageCode).catch((error) =>
-    handleError(languageCode, error, req, res)
+  let languageCode = def(first(req.headers["accept-language"]), "vi");
+  doRequestHandler(messageId, req, res, languageCode).catch((e) =>
+    handleError(languageCode, e, req, res)
   );
 }
 
 async function doRequestHandler(messageId, req, res, languageCode) {
   let uri = `/${req.method.toLowerCase()}${req.path}`;
   if (config.enableDebug) {
-    Logger.info(messageId, 'request', uri);
+    Logger.info(messageId, "request", uri);
   }
   if (config.enableEncryptPassword === true) {
     let fieldEncryptArr = config.encryptPassword[uri];
     if (fieldEncryptArr != null) {
       const body = req.body;
       fieldEncryptArr.forEach((field) => {
-        if (body[field] != null && typeof body[field] === 'string') {
+        if (body[field] != null && typeof body[field] === "string") {
           body[field] = rsaEncrypt(body[field], config.key.rsa.privateKey);
         }
       });
     }
   }
   switch (uri) {
-    case '/post/api/v1/login':
-    case '/post/api/v1/socialLogin':
-    case '/post/api/v1/register':
-    case '/post/api/v1/otp':
-    case '/post/api/v1/otp/verify':
-      return forwardRequest(messageId, req, res, uri, languageCode);
-    case '/post/api/v1/refreshToken':
+    case "/post/api/v1/login":
+    case "/post/api/v1/login/social":
+      return await authentication(messageId, req, res, uri, languageCode);
+    case "/post/api/v1/register":
+    case "/post/api/v1/otp":
+    case "/post/api/v1/otp/verify":
+    case "/post/api/v1/user/checkExist":
+      return await forwardRequest(messageId, req, res, uri, languageCode);
+    case "/post/api/v1/refreshToken":
       return refreshAccessToken(req, res);
-    case '/post/api/v1/revokeToken':
-      return revokeToken(req, res);
+    case "/post/api/v1/revokeToken":
+      return await revokeToken(req, res);
     default:
-      return checkToken(messageId, languageCode, uri, req, res);
+      return await checkToken(messageId, languageCode, uri, req, res);
   }
 }
 
-function checkToken(messageId, languageCode, uri, req, res) {
+async function checkToken(messageId, languageCode, uri, req, res) {
   let accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
-    Logger.warn(messageId, 'no prefix in authorization header', uri);
-    return returnCode(res, 401, 'UNAUTHORIZED');
+    Logger.warn(messageId, "no prefix in authorization header", uri);
+    return returnCode(res, 401, "UNAUTHORIZED");
   }
   if (accessToken.length === 0) {
-    Logger.warn(messageId, 'access token length 0', uri);
-    return returnCode(res, 401, 'UNAUTHORIZED');
+    Logger.warn(messageId, "access token length 0", uri);
+    return returnCode(res, 401, "UNAUTHORIZED");
   }
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
-  var payload;
+  let payload;
   try {
     let key = getKey(config.key.jwt.privateKey);
-    payload = jwt.verify(accessToken, key, { algorithms: 'RS256' });
+    payload = jwt.verify(accessToken, key, { algorithms: "RS256" });
   } catch {
-    Logger.warn(messageId, 'unauthorized ', uri);
-    return returnCode(res, 401, 'UNAUTHORIZED');
+    Logger.warn(messageId, "unauthorized ", uri);
+    return returnCode(res, 401, "UNAUTHORIZED");
   }
-  let token = convertToken(accessToken);
-  let refreshTokenId = payload.refreshTokenId;
-  forwardRequest(messageId, req, res, uri, languageCode, token, refreshTokenId);
-}
-
-async function doSendRequest(messageId, req, res, forwardResult, body) {
-  logMsg = `${messageId} forward request ${req.path} to ${forwardResult.topic}: ${forwardResult.uri}`;
-  Logger.info(logMsg);
-  let time = process.hrtime();
-  try {
-    let responseMsg = await Kafka.getInstance().sendRequestAsync(
-      `${new Date().getTime()}-${messageId}`,
-      forwardResult.topic,
-      forwardResult.uri,
-      body,
-      config.timeout
-    );
-    time = process.hrtime(time);
-    Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
-    const data = Kafka.getResponse(responseMsg);
-    return res.status(200).send(data);
-  } catch (e) {
-    time = process.hrtime(time);
-    Logger.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
-  }
-}
-
-function def(data, def) {
-  if (data == null) {
-    return def;
-  }
-  return data;
-}
-
-function first(s) {
-  if (s == null) {
-    return undefined;
-  }
-  if (typeof s === 'string') {
-    return s;
-  }
-  if (s.length === 0) {
-    return undefined;
-  }
-  return s.find((i) => i != null);
-}
-
-function returnCode(res, status, code) {
-  res.status(status).send({ code, message: i18n.t(code) });
+  let token = convertToken(payload);
+  await forwardRequest(messageId, req, res, uri, languageCode, token);
 }
 
 function handleError(language, error, req, res) {
-  Logger.error('error on handler request', req.path, req.method, error);
+  Logger.error("error on handler request", req.path, req.method, error);
   if (error instanceof Errors.GeneralError) {
     let code = error.code;
     let status = config.responseCode[code];
@@ -142,50 +102,39 @@ function handleError(language, error, req, res) {
     }
   } else {
     return res.status(500).send({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: i18n.t('INTERNAL_SERVER_ERROR', { lng: language }),
+      code: "INTERNAL_SERVER_ERROR",
+      message: i18n.t("INTERNAL_SERVER_ERROR", { lng: language }),
     });
   }
 }
 
-function forwardRequest(messageId, req, res, uri, languageCode, token, refreshTokenId){
-  let [scope, matcher] = scopeService.findScope(uri, true);
-  if (scope == null) {
-    return returnCode(res, 404, 'URI_NOT_FOUND');
+async function forwardRequest(messageId, req, res, uri, languageCode, token) {
+  [body, forward] = buildDataRequest(uri, req, res, languageCode, token);
+  await doSendRequest(messageId, req, res, forward, body);
+}
+
+async function doSendRequest(messageId, req, res, forward, body) {
+  logMsg = `${messageId} forward request ${req.path} to ${forward.topic}: ${forward.uri}`;
+  Logger.info(logMsg);
+  let time = process.hrtime();
+  let responseMsg;
+  try {
+    responseMsg = await Kafka.getInstance().sendRequestAsync(
+      `${new Date().getTime()}-${messageId}`,
+      forward.topic,
+      forward.uri,
+      body,
+      config.timeout
+    );
+  } catch (e) {
+    time = process.hrtime(time);
+    Logger.error(`${logMsg} took ${time[0]}.${time[1]} seconds with error`, e);
   }
-  var body = req.body;
-  Object.keys(req.query).forEach((queryParam) => {
-    body[queryParam] = req.query[queryParam];
-  });
-  if (matcher != null) {
-    if (matcher.paramNames != null) {
-      for (let i = 0; i < matcher.paramNames.length; i++) {
-        if (i < matcher.paramValues.length) {
-          body[matcher.paramNames[i]] = matcher.paramValues[i];
-        } else {
-          Logger.error(
-            'lack of param',
-            req.path,
-            scope.processedPattern,
-            scope.uriPattern,
-            matcher
-          );
-        }
-      }
-    }
-  }
-  if (body.headers == null) {
-    body.headers = {};
-  }
-  if (token != null) {
-    body.headers.token = token;
-  }
-  body.headers['accept-language'] = getLanguageCode(languageCode);
-  let forwardResult = {
-    uri: scope.forwardData.uri,
-    topic: scope.forwardData.service.toLowerCase(),
-  };
-  return doSendRequest(messageId, req, res, forwardResult, body);
+  time = process.hrtime(time);
+  Logger.warn(`${logMsg} took ${time[0]}.${time[1]} seconds`);
+  const data = Kafka.getResponse(responseMsg);
+  res.status(200).send(data);
+  return null;
 }
 
 module.exports = {

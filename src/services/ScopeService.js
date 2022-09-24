@@ -1,5 +1,5 @@
-const { ScopeModel } = require('../model/scheme/ScopeScheme');
-const { ScopeGroupModel } = require('../model/scheme/ScopeGroupScheme');
+const { ScopeModel } = require('../model/schema/ScopeSchema');
+const { ScopeGroupModel } = require('../model/schema/ScopeGroupSchema');
 const { Logger } = require('common');
 const SCOPE_KEY = 'qazxs&&wedc';
 var scopeData = {};
