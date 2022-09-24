@@ -4,8 +4,9 @@ const config = require("../../config");
 const uuid = require("uuid");
 const moment = require("moment");
 const { RefreshTokeModel } = require("../model/schema/RefreshTokenSchema");
+const { default: mongoose } = require("mongoose");
 
-function refreshAccessToken(req, res) {
+async function refreshAccessToken(req, res) {
   const invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body["refresh_token"], "refresh_token")
     .setRequire()
@@ -17,7 +18,7 @@ function refreshAccessToken(req, res) {
     .setRequire()
     .throwValid(invalidParams);
   invalidParams.throwErr();
-  let rf = RefreshTokeModel.findOne({
+  let rf = await RefreshTokeModel.findOne({
     token: req.body["refresh_token"],
   }).exec();
   if (!rf) {
@@ -33,7 +34,7 @@ function refreshAccessToken(req, res) {
     .getTime();
   let key = getKey(config.key.jwt.privateKey);
   let accessTokenData = {
-    rId: rf._id.toString(),
+    rId: rf._id,
     uId: rf.userId,
     ud: rf.extendData.ud,
   };
@@ -41,15 +42,26 @@ function refreshAccessToken(req, res) {
   return res.status(200).send({ accessToken: token, accExpiredTime });
 }
 
-function revokeToken(req, res) {
+async function revokeToken(req, res) {
   const invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body["refresh_token"], "refresh_token")
     .setRequire()
     .throwValid(invalidParams);
   invalidParams.throwErr();
-  RefreshTokeModel.findOneAndRemove({
-    token: req.body["refresh_token"],
-  });
+  let conn = mongoose.connection;
+  let session = await conn.startSession();  
+  try {
+    await session.startTransaction();
+    RefreshTokeModel.findOneAndRemove({
+      token: req.body["refresh_token"],
+    }); 
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw new Errors.GeneralError("INTERNAL_SERVER_ERROR");
+  } finally {
+    session.endSession();
+  }
   return res.status(200).send({});
 }
 

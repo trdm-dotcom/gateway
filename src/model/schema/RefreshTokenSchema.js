@@ -16,7 +16,7 @@ const RefreshTokenSchema = new Schema({
   }
 });
 
-const RefreshTokeModel = mongoose.model('c_refresh_token', RefreshTokenSchema);
+const RefreshTokeModel = mongoose.model('c_refresh_tokens', RefreshTokenSchema);
 
 module.exports = {
     RefreshTokeModel,

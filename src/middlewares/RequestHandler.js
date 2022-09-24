@@ -52,22 +52,22 @@ async function doRequestHandler(messageId, req, res, languageCode) {
   switch (uri) {
     case "/post/api/v1/login":
     case "/post/api/v1/login/social":
-    case "/post/api/v1/login/biometric":
-      return authentication(messageId, req, res, uri, languageCode);
+      return await authentication(messageId, req, res, uri, languageCode);
     case "/post/api/v1/register":
     case "/post/api/v1/otp":
     case "/post/api/v1/otp/verify":
-      return forwardRequest(messageId, req, res, uri, languageCode);
+    case "/post/api/v1/user/checkExist":
+      return await forwardRequest(messageId, req, res, uri, languageCode);
     case "/post/api/v1/refreshToken":
       return refreshAccessToken(req, res);
     case "/post/api/v1/revokeToken":
-      return revokeToken(req, res);
+      return await revokeToken(req, res);
     default:
-      return checkToken(messageId, languageCode, uri, req, res);
+      return await checkToken(messageId, languageCode, uri, req, res);
   }
 }
 
-function checkToken(messageId, languageCode, uri, req, res) {
+async function checkToken(messageId, languageCode, uri, req, res) {
   let accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
     Logger.warn(messageId, "no prefix in authorization header", uri);
@@ -78,7 +78,7 @@ function checkToken(messageId, languageCode, uri, req, res) {
     return returnCode(res, 401, "UNAUTHORIZED");
   }
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
-  var payload;
+  let payload;
   try {
     let key = getKey(config.key.jwt.privateKey);
     payload = jwt.verify(accessToken, key, { algorithms: "RS256" });
@@ -86,9 +86,8 @@ function checkToken(messageId, languageCode, uri, req, res) {
     Logger.warn(messageId, "unauthorized ", uri);
     return returnCode(res, 401, "UNAUTHORIZED");
   }
-  let token = convertToken(accessToken);
-  let refreshTokenId = payload.rId;
-  forwardRequest(messageId, req, res, uri, languageCode, token);
+  let token = convertToken(payload);
+  await forwardRequest(messageId, req, res, uri, languageCode, token);
 }
 
 function handleError(language, error, req, res) {
@@ -109,9 +108,9 @@ function handleError(language, error, req, res) {
   }
 }
 
-function forwardRequest(messageId, req, res, uri, languageCode, token) {
+async function forwardRequest(messageId, req, res, uri, languageCode, token) {
   [body, forward] = buildDataRequest(uri, req, res, languageCode, token);
-  doSendRequest(messageId, req, res, forward, body);
+  await doSendRequest(messageId, req, res, forward, body);
 }
 
 async function doSendRequest(messageId, req, res, forward, body) {

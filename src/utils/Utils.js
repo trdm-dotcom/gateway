@@ -1,5 +1,6 @@
 const fs = require("fs");
 const crypto = require("crypto");
+const CryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
 const acceptLanguage = require("accept-language");
 const config = require("../../config");
@@ -7,6 +8,7 @@ const i18n = require("i18next");
 acceptLanguage.languages(["en", "vi"]);
 const uuid = require("uuid");
 const scopeService = require("../services/ScopeService");
+const { Logger } = require("common");
 
 const MULTI_ENCRYPTION_PART_PREFIX = "mutipart";
 
@@ -16,8 +18,8 @@ function rsaEncrypt(data, pathPublicKey) {
     return encrypt(data, key);
   } catch (error) {
     if (
-      e.message != null &&
-      e.message.indexOf("data too large for key size") >= 0
+      error.message != null &&
+      error.message.indexOf("data too large for key size") >= 0
     ) {
       let encryption = MULTI_ENCRYPTION_PART_PREFIX;
       let index = 0;
@@ -88,10 +90,7 @@ function convertToken(token) {
 
   return {
     userData: undefinedOr(token.ud),
-    clientId: undefinedOr(token.cId),
-    loginMethod: undefinedOr(token.lm),
     refreshTokenId: undefinedOr(token.rId),
-    userId: undefinedOr(token.uId),
   };
 }
 
@@ -113,8 +112,9 @@ function checkIfValidIPV6(str) {
 }
 
 function buildDataRequest(uri, req, res, languageCode, token) {
-  let [scope, matcher] = scopeService.findScope(uri, true);
+  let [scope, matcher] = scopeService.findScope(uri, false);
   if (scope == null) {
+    Logger.warn("not found any private scope", uri);
     return returnCode(res, 404, "URI_NOT_FOUND");
   }
   var body = req.body;
@@ -146,13 +146,13 @@ function buildDataRequest(uri, req, res, languageCode, token) {
   }
   body.headers["accept-language"] = getLanguageCode(languageCode);
   const ip = first([
-    first(req.headers['tx-source-ip']),
-    first(req.headers['x-forwarded-for']),
+    first(req.headers["tx-source-ip"]),
+    first(req.headers["x-forwarded-for"]),
     first(req.connection.remoteAddress),
   ]);
   if (ip != null) {
     if (!checkIfValidIPV6(ip)) {
-      body.sourceIp = ip.replace(/^.*:/, '');
+      body.sourceIp = ip.replace(/^.*:/, "");
     }
     body.sourceIp = ip;
   }
