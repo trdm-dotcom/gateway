@@ -70,7 +70,7 @@ let config = {
   port: 3000,
   timeout: 20000,
   mongo: {
-    url: "mongodb://localhost:27017/api_gateway",
+    url: "mongodb://localhost:27017/gateway",
     options: {},
   },
   accessToken: {
