@@ -22,7 +22,7 @@ async function refreshAccessToken(req, res) {
     token: req.body["refresh_token"],
   }).exec();
   if (!rf) {
-    throw new Errors.GeneralError("INVALID_REFRESH_TOKEN");
+    throw new Errors.TokenExpiredError();
   }
   let expiredAt = moment(rf.expiredAt);
   if (moment().isAfter(expiredAt)) {
