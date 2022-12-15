@@ -30,7 +30,7 @@ function rsaEncrypt(data, pathPublicKey) {
       }
       return encryption;
     }
-    throw e;
+    throw error;
   }
 }
 
