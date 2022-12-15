@@ -4,7 +4,7 @@ const config = require("../../config");
 const uuid = require("uuid");
 const moment = require("moment");
 const { RefreshTokeModel } = require("../model/schema/RefreshTokenSchema");
-const { default: mongoose } = require("mongoose");
+const mongoose = require('mongoose');
 
 async function refreshAccessToken(req, res) {
   const invalidParams = new Errors.InvalidParameterError();
@@ -54,6 +54,8 @@ async function revokeToken(req, res) {
     await session.startTransaction();
     RefreshTokeModel.findOneAndRemove({
       token: req.body["refresh_token"],
+    }, {
+      session: session
     }); 
     await session.commitTransaction();
   } catch (error) {

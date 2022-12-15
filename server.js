@@ -8,7 +8,6 @@ const { requestHandler } = require('./src/middlewares/RequestHandler');
 const { verifyFormat } = require('./src/middlewares/BodyFormatVerifier');
 const { Logger, Kafka } = require('common');
 const cors = require('cors');
-const { taskCleanRefreshToken } = require("./src/job/JobCleanRefreshToken");
 
 Logger.create(config.logger.config, true);
 Logger.info('staring...');
@@ -40,7 +39,6 @@ async function initServer() {
   app.listen(config.port, () => {
     Logger.info('Server Start!');
   });
-  taskCleanRefreshToken.start();
 }
 
 module.exports = {
