@@ -33,6 +33,7 @@ async function initServer() {
     {},
   );
   app.use(requestHandler);
+  mongoose.set("strictQuery", false);
   mongoose.connect(config.mongo.url, config.mongo.options)
   .then(() => Logger.info('connected to mongo!'));
   app.listen(config.port, () => {
