@@ -145,11 +145,7 @@ function buildDataRequest(uri, req, res, languageCode, token) {
     body.headers.token = token;
   }
   body.headers["accept-language"] = getLanguageCode(languageCode);
-  const ip = first([
-    first(req.headers["tx-source-ip"]),
-    first(req.headers["x-forwarded-for"]),
-    first(req.connection.remoteAddress),
-  ]);
+  const ip = getSourceIp(req);
   if (ip != null) {
     if (!checkIfValidIPV6(ip)) {
       body.sourceIp = ip.replace(/^.*:/, "");
@@ -166,6 +162,14 @@ function buildDataRequest(uri, req, res, languageCode, token) {
 
 function returnCode(res, status, code) {
   res.status(status).send({ code, message: i18n.t(code) });
+}
+
+function getSourceIp(req) {
+  return first([
+    first(req.headers["tx-source-ip"]),
+    first(req.headers["x-forwarded-for"]),
+    first(req.connection.remoteAddress),
+  ]);
 }
 
 function def(data, def) {
@@ -200,4 +204,5 @@ module.exports = {
   buildDataRequest,
   def,
   first,
+  getSourceIp,
 };

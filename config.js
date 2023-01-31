@@ -63,9 +63,9 @@ let config = {
     },
     aes: {
       key: "IaPON8rXjCQ5TIUVYBtcw8WKGCfcQEtc",
-      iv: "jI4j7fqHWO",
-      keyHash: "wfyxb3sR1O"
-    }
+      iv: "NcRfUjWnZr4u7x!A",
+      keyHash: "wfyxb3sR1O",
+    },
   },
   port: 3000,
   timeout: 20000,
@@ -82,14 +82,9 @@ let config = {
     expiredInSecondsWithRememberMe: 2592000,
   },
   hash: {
-    headers: 'hommer',
+    headers: "hommer",
   },
-  google: {
-    clientId:
-      "828790616262-hs95un5i5le2ttlbj0sa6t36tapsvmqb.apps.googleusercontent.com",
-    clientSecret: "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",
-    callbackURL: "/google/callback",
-  },
+  isEnableBiometric: true,
 };
 
 config.kafkaConsumerOptions = {

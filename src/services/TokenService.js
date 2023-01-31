@@ -4,7 +4,6 @@ const config = require("../../config");
 const uuid = require("uuid");
 const moment = require("moment");
 const { RefreshTokeModel } = require("../model/schema/RefreshTokenSchema");
-const mongoose = require('mongoose');
 
 async function refreshAccessToken(req, res) {
   const invalidParams = new Errors.InvalidParameterError();
@@ -48,22 +47,9 @@ async function revokeToken(req, res) {
     .setRequire()
     .throwValid(invalidParams);
   invalidParams.throwErr();
-  let conn = mongoose.connection;
-  let session = await conn.startSession();  
-  try {
-    await session.startTransaction();
-    RefreshTokeModel.findOneAndRemove({
-      token: req.body["refresh_token"],
-    }, {
-      session: session
-    }); 
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-    throw new Errors.GeneralError("INTERNAL_SERVER_ERROR");
-  } finally {
-    session.endSession();
-  }
+  RefreshTokeModel.findOneAndRemove({
+    token: req.body["refresh_token"],
+  });
   return res.status(200).send({});
 }
 
@@ -115,7 +101,7 @@ async function createRefreshToken(
   deviceType,
   accessTokenData
 ) {
-  let refreshTokenEntity = {
+  let refreshTokenEntity = await RefreshTokeModel.create({
     token: uuid.v4(),
     userId: userId,
     sourceIp: sourceIp,
@@ -124,16 +110,8 @@ async function createRefreshToken(
       ud: accessTokenData.ud,
     },
     expiredAt: moment().add(refreshTokenTtl, "s").toDate(),
-  };
-  let results = await new Promise((resolve, reject) => {
-    let refeshTokenModel = new RefreshTokeModel(refreshTokenEntity);
-    refeshTokenModel.save((err, result) => {
-      if (err) reject(err);
-      resolve(result);
-    });
-  });
-  Logger.info("create refresh token result", results);
-  refreshTokenEntity.id = results._id.toString();
+  })[0];
+  Logger.info("create refresh token result", refreshTokenEntity);
   return refreshTokenEntity;
 }
 

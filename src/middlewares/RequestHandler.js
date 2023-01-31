@@ -12,9 +12,12 @@ const {
   def,
   first,
 } = require("../utils/Utils");
-
 const authentication = require("./../services/AuthenticationService");
-
+const {
+  biometricRegister,
+  queryBiometricStatus,
+  cancelBiometricRegister,
+} = require("./../services/BiometricServices");
 const TOKEN_PREFIX = "jwt ";
 const prefix = `${new Date().getTime()}-${config.clusterId}`;
 const i18n = getI18nInstance();
@@ -52,12 +55,19 @@ async function doRequestHandler(messageId, req, res, languageCode) {
   switch (uri) {
     case "/post/api/v1/login":
     case "/post/api/v1/login/social":
+    case "/post/api/v1/login/biometric":
       return await authentication(messageId, req, res, uri, languageCode);
     case "/post/api/v1/register":
     case "/post/api/v1/otp":
     case "/post/api/v1/otp/verify":
     case "/post/api/v1/user/checkExist":
       return await forwardRequest(messageId, req, res, uri, languageCode);
+    case "/post/api/v1/biometricRegister":
+      return await biometricRegister(messageId, req, res);
+    case "/get/api/v1/biometricStatus":
+      return await queryBiometricStatus(req, res);
+    case "/delete/api/v1/unregisterBiometric":
+      return await cancelBiometricRegister(req, res);
     case "/post/api/v1/refreshToken":
       return refreshAccessToken(req, res);
     case "/post/api/v1/revokeToken":
