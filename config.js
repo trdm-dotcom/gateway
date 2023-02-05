@@ -23,7 +23,7 @@ let config = {
         application: { type: "console" },
         file: {
           type: "file",
-          filename: "./../logs/api_gateway/application.log",
+          filename: "./../logs/gateway/application.log",
           compression: true,
           maxLogSize: 104857600,
           backups: 10,
