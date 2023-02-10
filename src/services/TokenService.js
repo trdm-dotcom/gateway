@@ -19,7 +19,7 @@ async function refreshAccessToken(req, res) {
   invalidParams.throwErr();
   let rf = await RefreshTokeModel.findOne({
     token: req.body["refresh_token"],
-  }).exec();
+  });
   if (!rf) {
     throw new Errors.TokenExpiredError();
   }

@@ -19,7 +19,7 @@ async function biometricRegister(messageId, req, res) {
   req.body["username"] = req.body["username"].trim();
   let results = await BiometricModel.find({
     $and: [{ username: req.body["username"] }, { isDeleted: false }],
-  }).exec();
+  });
   if (results.length > 0) {
     if (results[0].publicKey == request.publicKey) {
       throw new Errors.GeneralError("LOGIN_BIOMETRIC_PUBLIC_KEY_EXISTED");
@@ -59,7 +59,7 @@ async function biometricLogin(req) {
   const verify = crypto.createVerify("RSA-SHA256");
   let results = await BiometricModel.find({
     $and: [{ username: req.body["username"] }, { isDeleted: false }],
-  }).exec();
+  });
   if (results == null || results.length == 0) {
     throw new Errors.GeneralError("LOGIN_BIOMETRIC_NOT_FOUND");
   }
@@ -99,7 +99,7 @@ async function queryBiometricStatus(req, res) {
       { isDeleted: false },
       { publicKey: req.body["publicKey"] },
     ],
-  }).exec();
+  });
   return res.status(200).send({ isEnable: results.length == 1 });
 }
 
@@ -112,7 +112,7 @@ async function cancelBiometricRegister(req, res) {
   req.body["username"] = req.body["username"].trim();
   let results = await BiometricModel.find({
     $and: [{ username: req.body["username"] }, { isDeleted: false }],
-  }).exec();
+  });
   if (results == null || results.length == 0) {
     throw new Errors.GeneralError("LOGIN_BIOMETRIC_NOT_FOUND");
   }
@@ -125,12 +125,12 @@ async function updateBiometric(result, status, reason) {
     isDeleted: status,
     deleteReason:
       result == "INACTIVE" ? "huỷ do user không xác thực OTP" : reason,
-  }).exec();
+  });
 }
 
 module.exports = {
   biometricRegister,
   queryBiometricStatus,
   cancelBiometricRegister,
-  biometricLogin
+  biometricLogin,
 };
