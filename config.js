@@ -85,6 +85,9 @@ let config = {
     headers: "hommer",
   },
   isEnableBiometric: true,
+  login: {
+    clientSecret: "iW4rurIrZJ"
+  }
 };
 
 config.kafkaConsumerOptions = {

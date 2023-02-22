@@ -6,7 +6,7 @@ const moment = require("moment");
 const { RefreshTokeModel } = require("../model/schema/RefreshTokenSchema");
 
 async function refreshAccessToken(req, res) {
-  const invalidParams = new Errors.InvalidParameterError();
+  let invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body["refresh_token"], "refresh_token")
     .setRequire()
     .throwValid(invalidParams);
@@ -17,6 +17,9 @@ async function refreshAccessToken(req, res) {
     .setRequire()
     .throwValid(invalidParams);
   invalidParams.throwErr();
+  if(req.body["client_secret"] != config.login.clientSecret){
+    throw new Errors.GeneralError("INVALID_CLIENT_SECRET");
+  }
   let rf = await RefreshTokeModel.findOne({
     token: req.body["refresh_token"],
   });
@@ -29,20 +32,20 @@ async function refreshAccessToken(req, res) {
   }
   let accExpiredTime = moment()
     .add(config.accessToken.expiredInSeconds, "s")
-    .toDate()
-    .getTime();
+    .valueOf();
   let key = getKey(config.key.jwt.privateKey);
   let accessTokenData = {
     rId: rf._id,
     uId: rf.userId,
     ud: rf.extendData.ud,
+    gt: rf.extendData.gt
   };
   let token = generateJwtToken(accessTokenData, key, accExpiredTime);
   return res.status(200).send({ accessToken: token, accExpiredTime });
 }
 
 async function revokeToken(req, res) {
-  const invalidParams = new Errors.InvalidParameterError();
+  let invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body["refresh_token"], "refresh_token")
     .setRequire()
     .throwValid(invalidParams);
@@ -108,6 +111,7 @@ async function createRefreshToken(
     deviceType: deviceType,
     extendData: {
       ud: accessTokenData.ud,
+      gt: accessTokenData.gt
     },
     expiredAt: moment().add(refreshTokenTtl, "s").toDate(),
   })[0];

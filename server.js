@@ -13,7 +13,6 @@ Logger.create(config.logger.config, true);
 Logger.info('staring...');
 
 async function initServer() {
-  app.use('/assets', express.static('assets'));
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
   app.use(cors(config.cors));

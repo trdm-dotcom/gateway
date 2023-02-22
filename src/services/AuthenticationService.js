@@ -12,11 +12,17 @@ const GrantType = {
 };
 
 async function authentication(messageId, req, res, uri, languageCode) {
-  const invalidParams = new Errors.InvalidParameterError();
+  let invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body["grant_type"], "grant_type")
     .setRequire()
     .throwValid(invalidParams);
+  Utils.validate(req.body["client_secret"], "client_secret")
+    .setRequire()
+    .throwValid(invalidParams);
   invalidParams.throwErr();
+  if(req.body["client_secret"] != config.login.clientSecret){
+    throw new Errors.GeneralError("INVALID_CLIENT_SECRET");
+  }
   switch (req.body["grant_type"]) {
     case GrantType.PASSWORD:
       return await password(messageId, req, res, uri, languageCode);
@@ -87,12 +93,10 @@ async function loginDirectToService(messageId, uri, req, res, languageCode) {
         : config.refreshToken.expiredInSeconds,
       "second"
     )
-    .toDate()
-    .getTime();
+    .valueOf();
   let accExpiredTime = moment()
     .add(config.accessToken.expiredInSeconds, "second")
-    .toDate()
-    .getTime();
+    .valueOf();
   let result = await generateToken(
     req.body["grant_type"],
     userData.id,

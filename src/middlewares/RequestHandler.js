@@ -69,7 +69,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
     case "/delete/api/v1/unregisterBiometric":
       return await cancelBiometricRegister(req, res);
     case "/post/api/v1/refreshToken":
-      return refreshAccessToken(req, res);
+      return await refreshAccessToken(req, res);
     case "/post/api/v1/revokeToken":
       return await revokeToken(req, res);
     default:
