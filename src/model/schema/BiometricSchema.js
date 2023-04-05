@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const BiometricSchema = new Schema(
@@ -14,14 +14,14 @@ const BiometricSchema = new Schema(
   },
   {
     timestamps: {
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
     },
   }
 );
 
-const BiometricModel = mongoose.model("c_biometric", BiometricSchema);
+const BiometricModel = mongoose.model('c_biometric', BiometricSchema);
 
 module.exports = {
-    BiometricModel,
+  BiometricModel,
 };

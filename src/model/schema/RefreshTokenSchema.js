@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const RefreshTokenSchema = new Schema(
@@ -12,13 +12,13 @@ const RefreshTokenSchema = new Schema(
   },
   {
     timestamps: {
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
     },
   }
 );
 
-const RefreshTokeModel = mongoose.model("c_refresh_token", RefreshTokenSchema);
+const RefreshTokeModel = mongoose.model('c_refresh_token', RefreshTokenSchema);
 
 module.exports = {
   RefreshTokeModel,

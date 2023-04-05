@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ScopeSchema = new Schema(
@@ -17,13 +17,13 @@ const ScopeSchema = new Schema(
   },
   {
     timestamps: {
-      createdAt: "createdAt",
-      updatedAt: "updatedAt",
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     },
   }
 );
 
-const ScopeModel = mongoose.model("c_scope", ScopeSchema);
+const ScopeModel = mongoose.model('c_scope', ScopeSchema);
 
 module.exports = {
   ScopeModel,

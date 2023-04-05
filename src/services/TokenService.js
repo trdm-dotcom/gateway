@@ -1,27 +1,21 @@
-const { Errors, Utils, Logger } = require("common");
-const { getKey, generateJwtToken } = require("../utils/Utils");
-const config = require("../../config");
-const uuid = require("uuid");
-const moment = require("moment");
-const { RefreshTokeModel } = require("../model/schema/RefreshTokenSchema");
+const { Errors, Utils, Logger } = require('common');
+const { getKey, generateJwtToken } = require('../utils/Utils');
+const config = require('../../config');
+const uuid = require('uuid');
+const moment = require('moment');
+const { RefreshTokeModel } = require('../model/schema/RefreshTokenSchema');
 
 async function refreshAccessToken(req, res) {
   let invalidParams = new Errors.InvalidParameterError();
-  Utils.validate(req.body["refresh_token"], "refresh_token")
-    .setRequire()
-    .throwValid(invalidParams);
-  Utils.validate(req.body["client_secret"], "client_secret")
-    .setRequire()
-    .throwValid(invalidParams);
-  Utils.validate(req.body["grant_type"], "grant_type")
-    .setRequire()
-    .throwValid(invalidParams);
+  Utils.validate(req.body['refresh_token'], 'refresh_token').setRequire().throwValid(invalidParams);
+  Utils.validate(req.body['client_secret'], 'client_secret').setRequire().throwValid(invalidParams);
+  Utils.validate(req.body['grant_type'], 'grant_type').setRequire().throwValid(invalidParams);
   invalidParams.throwErr();
-  if(req.body["client_secret"] != config.login.clientSecret){
-    throw new Errors.GeneralError("INVALID_CLIENT_SECRET");
+  if (req.body['client_secret'] != config.login.clientSecret) {
+    throw new Errors.GeneralError('INVALID_CLIENT_SECRET');
   }
   let rf = await RefreshTokeModel.findOne({
-    token: req.body["refresh_token"],
+    token: req.body['refresh_token'],
   });
   if (!rf) {
     throw new Errors.TokenExpiredError();
@@ -30,15 +24,13 @@ async function refreshAccessToken(req, res) {
   if (moment().isAfter(expiredAt)) {
     throw new Errors.TokenExpiredError();
   }
-  let accExpiredTime = moment()
-    .add(config.accessToken.expiredInSeconds, "s")
-    .valueOf();
+  let accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 's').valueOf();
   let key = getKey(config.key.jwt.privateKey);
   let accessTokenData = {
     rId: rf._id,
     uId: rf.userId,
     ud: rf.extendData.ud,
-    gt: rf.extendData.gt
+    gt: rf.extendData.gt,
   };
   let token = generateJwtToken(accessTokenData, key, accExpiredTime);
   return res.status(200).send({ accessToken: token, accExpiredTime });
@@ -46,25 +38,15 @@ async function refreshAccessToken(req, res) {
 
 async function revokeToken(req, res) {
   let invalidParams = new Errors.InvalidParameterError();
-  Utils.validate(req.body["refresh_token"], "refresh_token")
-    .setRequire()
-    .throwValid(invalidParams);
+  Utils.validate(req.body['refresh_token'], 'refresh_token').setRequire().throwValid(invalidParams);
   invalidParams.throwErr();
   RefreshTokeModel.findOneAndRemove({
-    token: req.body["refresh_token"],
+    token: req.body['refresh_token'],
   });
   return res.status(200).send({});
 }
 
-async function generateToken(
-  grantType,
-  userId,
-  refreshTokenTtl,
-  accessTokenTtl,
-  userData,
-  sourceIp,
-  deviceType
-) {
+async function generateToken(grantType, userId, refreshTokenTtl, accessTokenTtl, userData, sourceIp, deviceType) {
   let accessTokenData = {
     gt: grantType,
     uId: userId,
@@ -73,23 +55,12 @@ async function generateToken(
       id: userData.id,
     },
   };
-  Logger.info("generate token");
-  let refreshToken = await createRefreshToken(
-    userId,
-    refreshTokenTtl,
-    sourceIp,
-    deviceType,
-    accessTokenData
-  );
+  Logger.info('generate token');
+  let refreshToken = await createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData);
   accessTokenData.rId = refreshToken.id;
   let key = getKey(config.key.jwt.privateKey);
   let accessToken = generateJwtToken(accessTokenData, key, accessTokenTtl);
-  Logger.warn(
-    "generated token ",
-    accessTokenData.rId,
-    refreshToken.token,
-    accessToken
-  );
+  Logger.warn('generated token ', accessTokenData.rId, refreshToken.token, accessToken);
   return {
     accessToken,
     accessTokenData,
@@ -97,13 +68,7 @@ async function generateToken(
   };
 }
 
-async function createRefreshToken(
-  userId,
-  refreshTokenTtl,
-  sourceIp,
-  deviceType,
-  accessTokenData
-) {
+async function createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData) {
   let refreshTokenEntity = await RefreshTokeModel.create({
     token: uuid.v4(),
     userId: userId,
@@ -111,11 +76,11 @@ async function createRefreshToken(
     deviceType: deviceType,
     extendData: {
       ud: accessTokenData.ud,
-      gt: accessTokenData.gt
+      gt: accessTokenData.gt,
     },
-    expiredAt: moment().add(refreshTokenTtl, "s").toDate(),
+    expiredAt: moment().add(refreshTokenTtl, 's').toDate(),
   })[0];
-  Logger.info("create refresh token result", refreshTokenEntity);
+  Logger.info('create refresh token result', refreshTokenEntity);
   return refreshTokenEntity;
 }
 

@@ -72,10 +72,7 @@ function createSortDict(scopes) {
 }
 
 async function queryScopeGroups(scopeDataInit) {
-  var data = await ScopeGroupModel.find(
-    {},
-    { _id: false, id: true, scopeGroupName: true, scopes: true }
-  );
+  var data = await ScopeGroupModel.find({}, { _id: false, id: true, scopeGroupName: true, scopes: true });
   for (let scopeGroup of data) {
     scopeGroup.scopes = [];
     scopeDataInit.scopeGroupMap.set(scopeGroup.id, scopeGroup);
@@ -126,14 +123,7 @@ function findScope(uri, isPublic, scopeGroupIds) {
   var uriParts = uri.split('/').filter((item) => item !== '');
   var paramNames = [];
   var paramValues = [];
-  var scope = findScopeUriWithIndex(
-    uriParts,
-    paramNames,
-    paramValues,
-    isPublic,
-    scopeGroupIds,
-    scopeDict
-  );
+  var scope = findScopeUriWithIndex(uriParts, paramNames, paramValues, isPublic, scopeGroupIds, scopeDict);
   var matcher = {
     remainingPathname: '',
     paramNames: paramNames,
@@ -142,15 +132,7 @@ function findScope(uri, isPublic, scopeGroupIds) {
   return [scope, matcher];
 }
 
-function findScopeUriWithIndex(
-  uriParts,
-  paramNames,
-  paramValues,
-  isPublic,
-  scopeGroupIds,
-  scopeDict,
-  index = 0
-) {
+function findScopeUriWithIndex(uriParts, paramNames, paramValues, isPublic, scopeGroupIds, scopeDict, index = 0) {
   if (index === uriParts.length) {
     let array = scopeDict[SCOPE_KEY];
     if (array != null) {
@@ -194,15 +176,7 @@ function findScopeUriWithIndex(
     }
     return undefined;
   } else {
-    return findScopeUriWithIndex(
-      uriParts,
-      paramNames,
-      paramValues,
-      isPublic,
-      scopeGroupIds,
-      insideDict,
-      index + 1
-    );
+    return findScopeUriWithIndex(uriParts, paramNames, paramValues, isPublic, scopeGroupIds, insideDict, index + 1);
   }
 }
 

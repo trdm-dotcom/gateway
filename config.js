@@ -1,12 +1,14 @@
 require("dotenv").config();
 const uuid = require("uuid");
+const { Utils } = require('common');
 
 const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = "/api/v1";
 let config = {
   clusterId: "gateway",
-  clientId: nodeId,
-  kafkaUrls: ["localhost:9092"],
+  clientId: `gateway-${nodeId}`,
+  nodeId: nodeId,
+  kafkaUrls: Utils.getEnvArr('ENV_KAFKA_URLS', ['localhost:9092']),
   kafkaCommonOptions: {},
   kafkaConsumerOptions: {},
   kafkaProducerOptions: {},
@@ -70,7 +72,7 @@ let config = {
   port: 3000,
   timeout: 20000,
   mongo: {
-    url: "mongodb://localhost:27017/gateway",
+    url: `mongodb://${Utils.getEnvStr('ENV_MONGO_HOST', 'localhost')}:${Utils.getEnvStr('ENV_MONGO_PORT', '27017')}/gateway`,
     options: {},
   },
   accessToken: {
