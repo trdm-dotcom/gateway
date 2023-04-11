@@ -26,6 +26,7 @@ async function refreshAccessToken(req, res) {
   }
   let accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 's').valueOf();
   let key = getKey(config.key.jwt.privateKey);
+  Logger.info(`key length ${key.length}`);
   let accessTokenData = {
     rId: rf._id,
     uId: rf.userId,
@@ -59,6 +60,7 @@ async function generateToken(grantType, userId, refreshTokenTtl, accessTokenTtl,
   let refreshToken = await createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData);
   accessTokenData.rId = refreshToken.id;
   let key = getKey(config.key.jwt.privateKey);
+  Logger.info(`key length ${key.length}`);
   let accessToken = generateJwtToken(accessTokenData, key, accessTokenTtl);
   Logger.warn('generated token ', accessTokenData.rId, refreshToken.token, accessToken);
   return {
@@ -79,7 +81,7 @@ async function createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType,
       gt: accessTokenData.gt,
     },
     expiredAt: moment().add(refreshTokenTtl, 's').toDate(),
-  })[0];
+  });
   Logger.info('create refresh token result', refreshTokenEntity);
   return refreshTokenEntity;
 }

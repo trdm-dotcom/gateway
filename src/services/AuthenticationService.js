@@ -32,18 +32,18 @@ async function authentication(messageId, req, res, uri, languageCode) {
 }
 
 async function password(messageId, req, res, uri, languageCode) {
-  let invalidParams = new Utils.InvalidParameterError();
+  const invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body['username'], 'username').setRequire().throwValid(invalidParams);
-  Utils.validate(request.body['password'], 'password').setRequire().throwValid(invalidParams);
+  Utils.validate(req.body['password'], 'password').setRequire().throwValid(invalidParams);
   invalidParams.throwErr();
   req.body['username'] = req.body['username'].trim();
   return await loginDirectToService(messageId, uri, req, res, languageCode);
 }
 
 async function social(messageId, req, res, languageCode) {
-  let invalidParams = new Utils.InvalidParameterError();
+  const invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body['login_social_token'], 'login_social_token').setRequire().throwValid(invalidParams);
-  Utils.validate(request.body['login_social_type'], 'login_social_type').setRequire().throwValid(invalidParams);
+  Utils.validate(req.body['login_social_type'], 'login_social_type').setRequire().throwValid(invalidParams);
   invalidParams.throwErr();
   req.body['username'] = req.body['username'].trim();
   return await loginDirectToService(messageId, uri, req, res, languageCode);
