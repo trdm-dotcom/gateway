@@ -66,7 +66,6 @@ function generateJwtToken(payload, key, expiredInSeconds) {
     header: {
       kid: uuid.v4(),
     },
-    issuer: config.accessToken.issuer,
     expiresIn: expiredInSeconds || config.accessToken.expiredInSeconds,
     algorithm: 'RS256',
   });
@@ -88,6 +87,9 @@ function convertToken(token) {
   return {
     userData: undefinedOr(token.ud),
     refreshTokenId: undefinedOr(token.rId),
+    grantType: undefinedOr(token.gt),
+    userId: undefinedOr(token.uId),
+    appVersion: undefinedOr(token.appV),
   };
 }
 

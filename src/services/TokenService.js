@@ -32,6 +32,7 @@ async function refreshAccessToken(req, res) {
     uId: rf.userId,
     ud: rf.extendData.ud,
     gt: rf.extendData.gt,
+    appV: rf.extendData.appV,
   };
   let token = generateJwtToken(accessTokenData, key, accExpiredTime);
   return res.status(200).send({ accessToken: token, accExpiredTime });
@@ -47,7 +48,16 @@ async function revokeToken(req, res) {
   return res.status(200).send({});
 }
 
-async function generateToken(grantType, userId, refreshTokenTtl, accessTokenTtl, userData, sourceIp, deviceType) {
+async function generateToken(
+  grantType,
+  userId,
+  refreshTokenTtl,
+  accessTokenTtl,
+  userData,
+  sourceIp,
+  deviceType,
+  appVersion
+) {
   let accessTokenData = {
     gt: grantType,
     uId: userId,
@@ -55,6 +65,7 @@ async function generateToken(grantType, userId, refreshTokenTtl, accessTokenTtl,
       username: userData.username,
       id: userData.id,
     },
+    appV: appVersion,
   };
   Logger.info('generate token');
   let refreshToken = await createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData);
