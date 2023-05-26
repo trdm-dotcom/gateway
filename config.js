@@ -50,6 +50,7 @@ let config = {
     '/post/api/v1/register': ['password'],
     '/post/api/v1/user/resetPassword': ['password'],
     '/post/api/v1/user/changePassword': ['oldpass', 'newpass'],
+    '/post/api/v1/user/confirm': ['password'],
   },
   fileDir: {
     scope: 'src/data/scopeData.json',
