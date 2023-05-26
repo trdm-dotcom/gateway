@@ -50,8 +50,7 @@ async function social(messageId, req, res, languageCode) {
 async function biometric(messageId, req, res, uri, languageCode) {
   const invalidParams = new Errors.InvalidParameterError();
   Utils.validate(req.body['username'], 'username').setRequire().throwValid(invalidParams);
-  Utils.validate(req.body['publicKey'], 'publicKey').setRequire().throwValid(invalidParams);
-  Utils.validate(req.body['password'], 'password').setRequire().throwValid(invalidParams);
+  Utils.validate(req.body['signatureValue'], 'publicKey').setRequire().throwValid(invalidParams);
   invalidParams.throwErr();
   req.body['username'] = req.body['username'].trim();
   return await loginDirectToService(messageId, uri, req, res, languageCode);

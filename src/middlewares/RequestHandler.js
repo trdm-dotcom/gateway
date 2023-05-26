@@ -54,6 +54,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
     case '/post/api/v1/otp':
     case '/post/api/v1/otp/verify':
     case '/post/api/v1/user/checkExist':
+    case '/post/api/v1/user/resetPassword':
       return await forwardRequest(messageId, req, res, uri, languageCode);
     case '/post/api/v1/refreshToken':
       return await refreshAccessToken(req, res);

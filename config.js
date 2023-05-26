@@ -48,8 +48,8 @@ let config = {
   encryptPassword: {
     '/post/api/v1/login': ['password'],
     '/post/api/v1/register': ['password'],
-    '/post/api/v1/user/resetPassword': ['password'],
-    '/post/api/v1/user/changePassword': ['oldpass', 'newpass'],
+    '/post/api/v1/user/resetPassword': ['newPassword'],
+    '/post/api/v1/user/changePassword': ['oldPassword', 'newPassword'],
     '/post/api/v1/user/confirm': ['password'],
   },
   fileDir: {

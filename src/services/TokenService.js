@@ -93,7 +93,7 @@ async function createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType,
     },
     expiredAt: moment().add(refreshTokenTtl, 's').toDate(),
   });
-  Logger.info('create refresh token result', refreshTokenEntity);
+  Logger.info(`create refresh token result ${JSON.stringify(refreshTokenEntity)}`);
   return refreshTokenEntity;
 }
 
