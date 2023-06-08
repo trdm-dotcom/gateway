@@ -13,6 +13,7 @@ const ScopeSchema = new Schema(
     },
     forwardType: String,
     groupIds: [Number],
+    eventIds: [Number],
     isPublic: Boolean,
   },
   {

@@ -71,7 +71,7 @@ let config = {
     },
   },
   port: 3000,
-  timeout: 20000,
+  timeout: 20000, // Seconds
   mongo: {
     url: `mongodb://${Utils.getEnvStr('ENV_MONGO_HOST', 'localhost')}:${Utils.getEnvStr(
       'ENV_MONGO_PORT',
@@ -80,20 +80,18 @@ let config = {
     options: {},
   },
   accessToken: {
-    expiredInSeconds: 900,
-    issuer: 'Homer',
+    expiredInSeconds: 900, // Seconds
+    issuer: 'do-an',
   },
   refreshToken: {
-    expiredInSeconds: 86400,
-    expiredInSecondsWithRememberMe: 2592000,
-  },
-  hash: {
-    headers: 'hommer',
+    expiredInSeconds: 86400, // Seconds
+    expiredInSecondsWithRememberMe: 2592000, // Seconds
   },
   isEnableBiometric: true,
   login: {
     clientSecret: 'iW4rurIrZJ',
   },
+  socketIO: {},
 };
 
 config.kafkaConsumerOptions = {

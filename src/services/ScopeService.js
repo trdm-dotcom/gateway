@@ -1,6 +1,7 @@
 const { ScopeModel } = require('../model/schema/ScopeSchema');
 const { ScopeGroupModel } = require('../model/schema/ScopeGroupSchema');
 const { Logger } = require('common');
+const { EventModel } = require('../model/schema/EventSchema');
 const SCOPE_KEY = 'qazxs&&wedc';
 var scopeData = {};
 var scopeDict = null;
@@ -19,9 +20,12 @@ async function createScopeData() {
     scopeGroupMap: new Map(),
     scopeApis: [],
     scopeApiMap: new Map(),
+    events: [],
+    eventMap: new Map(),
     unmatchedOpenApiList: [],
   };
   await queryScopeGroups(scopeDataInit);
+  await queryEvent(scopeDataInit);
   await queryScopes(scopeDataInit);
   Logger.warn('Load scope complete');
   return scopeDataInit;
@@ -86,8 +90,8 @@ async function queryScopes(scopeDataInit) {
     processUri(scope);
     scopeDataInit.scopes.push(scope);
     scopeDataInit.scopeDict.set(scope.id, scope);
-    if (scope.groups != null && scope.groups.length > 0) {
-      scope.groups.forEach((scopeGroupId) => {
+    if (scope.groupIds != null && scope.groupIds.length > 0) {
+      for (let scopeGroupId of scope.groupIds) {
         let scs = scopeDataInit.scopeGroupMap.get(scopeGroupId);
         if (scs == null) {
           scopeDataInit.scopeGroupMap.set(scopeGroupId, {
@@ -97,9 +101,28 @@ async function queryScopes(scopeDataInit) {
           });
         } else {
           scs.scopes.push(scope.id);
+          scopeDataInit.scopeGroupMap.set(scopeGroupId, scs);
         }
-      });
+      }
     }
+    if (scope.eventIds != null && scope.eventIds.length > 0) {
+      for (let eventId of scope.eventIds) {
+        let scs = scopeDataInit.eventMap.get(eventId);
+        if (scs != null) {
+          scs.forwardData = scope.forwardData;
+          scopeDataInit.eventMap.set(eventId, scs);
+        }
+      }
+    }
+  }
+}
+
+async function queryEvent(scopeDataInit) {
+  var data = await EventModel.find({}, { _id: false, id: true, eventName: true, eventClient: true });
+  for (let event of data) {
+    event.forwardData = {};
+    scopeDataInit.eventMap.set(event.id, event);
+    scopeDataInit.events.push(event);
   }
 }
 
@@ -180,7 +203,12 @@ function findScopeUriWithIndex(uriParts, paramNames, paramValues, isPublic, scop
   }
 }
 
+function eventForwardData() {
+  return scopeData.eventMap;
+}
+
 module.exports = {
+  eventForwardData,
   findScope,
   init,
 };

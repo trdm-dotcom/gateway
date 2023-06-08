@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const ScopeGroupSchema = new Schema(
+const EventSchema = new Schema(
   {
     id: Number,
-    scopeGroupName: String,
-    scopeIds: [Number],
+    eventName: String,
+    eventClient: String,
+    scopeId: Number,
   },
   {
     timestamps: {
@@ -15,8 +16,8 @@ const ScopeGroupSchema = new Schema(
   }
 );
 
-const ScopeGroupModel = mongoose.model('c_scope_group', ScopeGroupSchema);
+const EventModel = mongoose.model('c_event', EventSchema);
 
 module.exports = {
-  ScopeGroupModel,
+  EventModel,
 };

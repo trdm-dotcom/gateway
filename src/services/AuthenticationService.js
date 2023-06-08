@@ -67,33 +67,32 @@ function createILoginRes(result, userInfo, refExpiredTime, accExpiredTime) {
 }
 
 async function loginDirectToService(messageId, uri, req, res, languageCode) {
-  let [loginData, forward] = buildDataRequest(uri, req, res, languageCode);
-  let msg = await Kafka.getInstance().sendRequestAsync(
+  const [loginData, forward] = buildDataRequest(uri, req, res, languageCode);
+  const msg = await Kafka.getInstance().sendRequestAsync(
     messageId,
     forward.topic,
     forward.uri,
     loginData,
     config.timeout
   );
-  let userData = await Kafka.getResponse(msg);
-  let refExpiredTime = moment()
+  const userData = await Kafka.getResponse(msg);
+  const refExpiredTime = moment()
     .add(
       req.body['remember'] ? config.refreshToken.expiredInSecondsWithRememberMe : config.refreshToken.expiredInSeconds,
       'second'
     )
-    .valueOf();
-  let accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 'second').valueOf();
-  let result = await generateToken(
+    .toDate();
+  const accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 'second').toDate();
+  const result = await generateToken(
     req.body['grant_type'],
     userData.id,
     refExpiredTime,
-    accExpiredTime,
     userData,
     loginData.sourceIp,
     loginData.deviceType,
     req.body['app_version']
   );
-  let response = createILoginRes(result, userData, refExpiredTime, accExpiredTime);
+  const response = createILoginRes(result, userData, refExpiredTime, accExpiredTime);
   res.status(200).send(response);
 }
 

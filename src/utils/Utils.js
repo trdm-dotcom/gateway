@@ -1,6 +1,5 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const CryptoJS = require('crypto-js');
 const jwt = require('jsonwebtoken');
 const acceptLanguage = require('accept-language');
 const config = require('../../config');
@@ -13,12 +12,12 @@ const { Logger } = require('common');
 const MULTI_ENCRYPTION_PART_PREFIX = 'mutipart';
 
 function rsaEncrypt(data, pathPublicKey) {
-  let key = getKey(pathPublicKey);
+  const key = getKey(pathPublicKey);
   try {
     return encrypt(data, key);
   } catch (error) {
     if (error.message != null && error.message.indexOf('data too large for key size') >= 0) {
-      let encryption = MULTI_ENCRYPTION_PART_PREFIX;
+      const encryption = MULTI_ENCRYPTION_PART_PREFIX;
       let index = 0;
       while (index < data.length) {
         const part = data.substr(index, Math.min(100, data.length - index));
@@ -32,8 +31,8 @@ function rsaEncrypt(data, pathPublicKey) {
 }
 
 function encrypt(data, key) {
-  let buffer = Buffer.from(data);
-  let encrypt = crypto.publicEncrypt({ key: key, padding: 1 }, buffer);
+  const buffer = Buffer.from(data);
+  const encrypt = crypto.publicEncrypt({ key: key, padding: 1 }, buffer);
   return encrypt.toString('base64');
 }
 
@@ -52,8 +51,8 @@ function rsaDecrypt(data, pathPrivateKey) {
 }
 
 function decrypt(data, key) {
-  let buffer = Buffer.from(data, 'base64');
-  let decrypt = crypto.privateDecrypt({ key: key, padding: 1 }, buffer);
+  const buffer = Buffer.from(data, 'base64');
+  const decrypt = crypto.privateDecrypt({ key: key, padding: 1 }, buffer);
   return decrypt.toString('utf-8');
 }
 
@@ -61,12 +60,12 @@ function getKey(filename) {
   return fs.readFileSync(filename);
 }
 
-function generateJwtToken(payload, key, expiredInSeconds) {
+function generateJwtToken(payload, key) {
   return jwt.sign(payload, key, {
     header: {
       kid: uuid.v4(),
     },
-    expiresIn: expiredInSeconds || config.accessToken.expiredInSeconds,
+    expiresIn: config.accessToken.expiredInSeconds,
     algorithm: 'RS256',
   });
 }
@@ -111,7 +110,7 @@ function checkIfValidIPV6(str) {
 }
 
 function buildDataRequest(uri, req, res, languageCode, token) {
-  let [scope, matcher] = scopeService.findScope(uri, false);
+  const [scope, matcher] = scopeService.findScope(uri, false);
   if (scope == null) {
     Logger.warn('not found any private scope', uri);
     return returnCode(res, 404, 'URI_NOT_FOUND');
@@ -198,4 +197,5 @@ module.exports = {
   def,
   first,
   getSourceIp,
+  checkIfValidIPV6,
 };

@@ -3,7 +3,6 @@ const { Errors, Logger, Kafka } = require('common');
 const { refreshAccessToken, revokeToken } = require('../services/TokenService');
 const jwt = require('jsonwebtoken');
 const {
-  getKey,
   convertToken,
   getI18nInstance,
   rsaEncrypt,
@@ -24,8 +23,8 @@ function getMessageId() {
 }
 
 function requestHandler(req, res, next) {
-  let messageId = getMessageId();
-  let languageCode = def(first(req.headers['accept-language']), 'vi');
+  const messageId = getMessageId();
+  const languageCode = def(first(req.headers['accept-language']), 'vi');
   doRequestHandler(messageId, req, res, languageCode).catch((e) => handleError(languageCode, e, req, res));
 }
 
@@ -40,7 +39,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
       const body = req.body;
       fieldEncryptArr.forEach((field) => {
         if (body[field] != null && typeof body[field] === 'string') {
-          body[field] = rsaEncrypt(body[field], config.key.rsa.privateKey);
+          body[field] = rsaEncrypt(body[field], config.key.rsa.publicKey);
         }
       });
     }
@@ -66,7 +65,7 @@ async function doRequestHandler(messageId, req, res, languageCode) {
 }
 
 async function checkToken(messageId, languageCode, uri, req, res) {
-  let accessToken = req.headers.authorization;
+  const accessToken = req.headers.authorization;
   if (accessToken == null || !accessToken.startsWith(TOKEN_PREFIX)) {
     Logger.warn(messageId, 'no prefix in authorization header', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');
@@ -76,16 +75,14 @@ async function checkToken(messageId, languageCode, uri, req, res) {
     return returnCode(res, 401, 'UNAUTHORIZED');
   }
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
-  let payload;
   try {
-    let key = getKey(config.key.jwt.privateKey);
-    payload = jwt.verify(accessToken, key, { algorithms: 'RS256' });
+    const payload = jwt.verify(accessToken, _jwtPrvKey, { algorithms: 'RS256' });
+    const token = convertToken(payload);
+    await forwardRequest(messageId, req, res, uri, languageCode, token);
   } catch {
     Logger.warn(messageId, 'unauthorized ', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');
   }
-  let token = convertToken(payload);
-  await forwardRequest(messageId, req, res, uri, languageCode, token);
 }
 
 function handleError(language, error, req, res) {
@@ -118,7 +115,7 @@ async function doSendRequest(messageId, req, res, forward, body) {
   let responseMsg;
   try {
     responseMsg = await Kafka.getInstance().sendRequestAsync(
-      getMessageId(),
+      messageId,
       forward.topic,
       forward.uri,
       body,
@@ -136,5 +133,6 @@ async function doSendRequest(messageId, req, res, forward, body) {
 }
 
 module.exports = {
+  getMessageId,
   requestHandler,
 };

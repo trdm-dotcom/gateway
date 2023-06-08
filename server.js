@@ -8,7 +8,8 @@ const { requestHandler } = require('./src/middlewares/RequestHandler');
 const { verifyFormat } = require('./src/middlewares/BodyFormatVerifier');
 const { Logger, Kafka } = require('common');
 const cors = require('cors');
-const server = require('http').createServer(app);
+const server = require('http').Server(app);
+const { init } = require('./socket');
 
 Logger.create(config.logger.config, true);
 Logger.info('staring...');
@@ -20,7 +21,7 @@ async function initServer() {
   app.use(verifyFormat);
   app.use(device.capture());
   app.use(requestHandler);
-  mongoose.set('strictQuery', false);
+  init(server);
   await Promise.all([
     Kafka.create(
       config,
