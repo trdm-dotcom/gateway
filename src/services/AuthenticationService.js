@@ -1,8 +1,10 @@
-const { Errors, Kafka, Utils } = require('common');
+const { Errors, Utils } = require('common');
 const { buildDataRequest } = require('../utils/Utils');
 const config = require('../../config');
 const moment = require('moment');
 const { generateToken } = require('./TokenService');
+const { getInstance } = require('../services/KafkaProducerService');
+const { Kafka } = require('kafka-common');
 
 const GrantType = {
   PASSWORD: 'password',
@@ -68,21 +70,15 @@ function createILoginRes(result, userInfo, refExpiredTime, accExpiredTime) {
 
 async function loginDirectToService(messageId, uri, req, res, languageCode) {
   const [loginData, forward] = buildDataRequest(uri, req, res, languageCode);
-  const msg = await Kafka.getInstance().sendRequestAsync(
-    messageId,
-    forward.topic,
-    forward.uri,
-    loginData,
-    config.timeout
-  );
+  const msg = await getInstance().sendRequestAsync(messageId, forward.topic, forward.uri, loginData, config.timeout);
   const userData = await Kafka.getResponse(msg);
   const refExpiredTime = moment()
     .add(
       req.body['remember'] ? config.refreshToken.expiredInSecondsWithRememberMe : config.refreshToken.expiredInSeconds,
       'second'
     )
-    .toDate();
-  const accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 'second').toDate();
+    .valueOf();
+  const accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 'second').valueOf();
   const result = await generateToken(
     req.body['grant_type'],
     userData.id,

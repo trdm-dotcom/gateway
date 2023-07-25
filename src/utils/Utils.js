@@ -74,7 +74,7 @@ function getLanguageCode(code) {
   try {
     return acceptLanguage.get(code);
   } catch (e) {
-    return 'vi';
+    return 'en';
   }
 }
 
