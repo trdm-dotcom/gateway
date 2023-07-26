@@ -7,6 +7,7 @@ const EventSchema = new Schema(
     eventName: String,
     eventClient: String,
     scopeId: Number,
+    sendTo: Boolean,
   },
   {
     timestamps: {

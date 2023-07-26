@@ -49,7 +49,11 @@ async function forwardRequest(event, data, socket, languageCode) {
     body,
     event.eventName.toLowerCase()
   );
-  _io.to(socket.id).emit(event.eventClient.toLowerCase(), { status: 200, data: response });
+  if (event.sendTo) {
+    _io.to(socket.id).emit(event.eventClient.toLowerCase(), { status: 200, data: response });
+  } else {
+    _io.emit(event.eventClient.toLowerCase(), { status: 200, data: response });
+  }
 }
 
 async function doSendRequest(socketId, topic, uri, body, eventName) {
