@@ -118,7 +118,7 @@ async function queryScopes(scopeDataInit) {
 }
 
 async function queryEvent(scopeDataInit) {
-  var data = await EventModel.find({}, { _id: false, id: true, eventName: true, eventClient: true, sendTo: true });
+  const data = await EventModel.find({}, { _id: false, id: true, eventName: true, eventClient: true, sendTo: true });
   for (let event of data) {
     event.forwardData = {};
     scopeDataInit.eventMap.set(event.id, event);

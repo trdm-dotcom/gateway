@@ -79,6 +79,9 @@ let config = {
     )}/gateway`,
     options: {},
   },
+  redis: {
+    url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST', 'localhost')}:${Utils.getEnvStr('ENV_REDIS_PORT', '6379')}`,
+  },
   accessToken: {
     expiredInSeconds: 900, // Seconds
     issuer: 'do-an',
@@ -92,6 +95,11 @@ let config = {
     clientSecret: 'iW4rurIrZJ',
   },
   socketIO: {},
+  pubsub: {
+    channel: {
+      chat: `${Utils.getEnvStr('ENV_PUBSUB_CHANNEL_CHAT', 'MESSAGES')}`,
+    },
+  },
 };
 
 config.kafkaConsumerOptions = {

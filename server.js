@@ -13,6 +13,7 @@ const io = require('socket.io')(http, {
   cors: config.cors,
 });
 const { socketHandler } = require('./socket');
+const { RedisService } = require('./src/services/RedisService');
 
 Logger.create(config.logger.config, true);
 Logger.info('staring...');
@@ -26,7 +27,8 @@ async function initServer() {
   app.use(verifyFormat);
   app.use(device.capture());
   app.use(requestHandler);
-  global._io.on('connection', socketHandler);
+  _io.on('connection', socketHandler);
+  new RedisService().initPubSub(config.pubsub.channel.chat);
   http.listen(config.port, () => {
     Logger.info('Server Start!');
   });

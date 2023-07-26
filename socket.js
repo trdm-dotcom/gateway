@@ -15,6 +15,7 @@ function socketHandler(socket) {
   const languageCode = def(first(socket.handshake.headers['accept-language']), 'en');
   eventForwardData().forEach((event) => {
     socket.on(event.eventName.toLowerCase(), (data) => {
+      Logger.info(`forward request ${event.forwardData}`);
       forwardRequest(event, data, socket, languageCode).catch((error) => {
         Logger.error('error on handler request', socket.id, event, error);
         handleError(languageCode, socket, event.eventClient.toLowerCase(), error);
@@ -41,6 +42,7 @@ async function forwardRequest(event, data, socket, languageCode) {
     Logger.warn('unauthorized ', socket.id);
     return returnCode(socket, event.eventClient.toLowerCase(), 401, 'UNAUTHORIZED');
   }
+  delete data.authorization;
   const body = buildDataRequest(convertToken(payload), data, socket, languageCode);
   const response = await doSendRequest(
     socket.id,
