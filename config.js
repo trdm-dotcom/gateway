@@ -1,13 +1,11 @@
 require('dotenv').config();
-const uuid = require('uuid');
 const { Utils } = require('common');
 
-const nodeId = process.env.ENV_NODE_ID ? process.env.ENV_NODE_ID : uuid.v4();
 const basePath = '/api/v1';
 let config = {
   clusterId: 'gateway',
-  clientId: `gateway-${nodeId}`,
-  nodeId: nodeId,
+  clientId: `gateway-${Utils.getEnvNum('ENV_NODE_ID', 0)}`,
+  nodeId: Utils.getEnvNum('ENV_NODE_ID', 0),
   kafkaUrls: Utils.getEnvArr('ENV_KAFKA_URLS', ['localhost:9092']),
   kafkaCommonOptions: {},
   kafkaConsumerOptions: {},
