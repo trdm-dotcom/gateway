@@ -13,7 +13,7 @@ const io = require('socket.io')(http, {
   cors: config.cors,
 });
 const { socketHandler } = require('./socket');
-const { RedisService } = require('./src/services/RedisService');
+const { RedisPubSubService } = require('./src/services/RedisPubSubService');
 
 Logger.create(config.logger.config, true);
 Logger.info('staring...');
@@ -28,7 +28,13 @@ async function initServer() {
   app.use(device.capture());
   app.use(requestHandler);
   _io.on('connection', socketHandler);
-  new RedisService().initPubSub(config.pubsub.channel.chat);
+  new RedisPubSubService().initPubSub(config.pubsub.channel.chat, (message) => {
+    const { clientId, type, data } = message;
+    if (clientId !== config.clientId) {
+      return;
+    }
+    _io.emit(type, { status: 200, data: data });
+  });
   http.listen(config.port, () => {
     Logger.info('Server Start!');
   });

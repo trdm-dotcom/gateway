@@ -111,7 +111,7 @@ function handleError(language, socket, eventClient, error) {
     if (status != null) {
       _io.to(socket.id).emit(eventClient, { status: status, ...error.toStatus() });
     } else {
-      _io.to(socket.id).emit(eventClient, { status: status, ...error.toStatus() });
+      _io.to(socket.id).emit(eventClient, { status: 400, ...error.toStatus() });
     }
   } else {
     _io.to(socket.id).emit(eventClient, {
