@@ -78,7 +78,7 @@ let config = {
     options: {},
   },
   redis: {
-    url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST', 'localhost')}:${Utils.getEnvStr('ENV_REDIS_PORT', '6379')}`,
+    url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST_1', 'localhost')}:${Utils.getEnvStr('ENV_REDIS_PORT_1', '6379')}`,
   },
   accessToken: {
     expiredInSeconds: 900, // Seconds

@@ -1,5 +1,6 @@
 const config = require('../../config');
 const { createClient } = require('redis');
+const {Logger} = require("common");
 
 const DATA_TYPE = {
   UNDEFINED: 'a',
