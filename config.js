@@ -85,7 +85,7 @@ let config = {
     issuer: 'do-an',
   },
   refreshToken: {
-    expiredInSeconds: 86400, // Seconds
+    expiredInSeconds: 604800, // Seconds
     expiredInSecondsWithRememberMe: 2592000, // Seconds
   },
   isEnableBiometric: true,
