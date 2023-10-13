@@ -53,6 +53,8 @@ async function generateToken(grantType, userId, refreshTokenTtl, userData, sourc
     ud: {
       username: userData.username,
       id: userData.id,
+      name: userData.name,
+      status: userData.status,
     },
     appV: appVersion,
   };
