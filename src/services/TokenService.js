@@ -71,36 +71,17 @@ async function generateToken(grantType, userId, refreshTokenTtl, userData, sourc
 }
 
 async function createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData) {
-  let refreshTokenEntity = await RefreshTokeModel.findOne({ userId: userId });
-  if (refreshTokenEntity == null) {
-    refreshTokenEntity = await RefreshTokeModel.create({
-      token: uuid.v4(),
-      userId: userId,
-      sourceIp: sourceIp,
-      deviceType: deviceType,
-      extendData: {
-        ud: accessTokenData.ud,
-        gt: accessTokenData.gt,
-      },
-      expiredAt: refreshTokenTtl,
-    });
-  } else {
-    const expiredAt = moment(refreshTokenEntity.expiredAt);
-    if (moment().isAfter(expiredAt)) {
-      await RefreshTokeModel.findByIdAndDelete(refreshTokenEntity._id);
-      refreshTokenEntity = await RefreshTokeModel.create({
-        token: uuid.v4(),
-        userId: userId,
-        sourceIp: sourceIp,
-        deviceType: deviceType,
-        extendData: {
-          ud: accessTokenData.ud,
-          gt: accessTokenData.gt,
-        },
-        expiredAt: moment(refreshTokenTtl).toDate(),
-      });
-    }
-  }
+  const refreshTokenEntity = await RefreshTokeModel.create({
+    token: uuid.v4(),
+    userId: userId,
+    sourceIp: sourceIp,
+    deviceType: deviceType,
+    extendData: {
+      ud: accessTokenData.ud,
+      gt: accessTokenData.gt,
+    },
+    expiredAt: refreshTokenTtl,
+  });
   Logger.info(`create refresh token result ${JSON.stringify(refreshTokenEntity)}`);
   return refreshTokenEntity;
 }
