@@ -7,7 +7,7 @@ const i18n = require('i18next');
 acceptLanguage.languages(['en', 'vi']);
 const uuid = require('uuid');
 const scopeService = require('../services/ScopeService');
-const { Logger } = require('common');
+const { Logger, Errors } = require('common');
 
 const MULTI_ENCRYPTION_PART_PREFIX = 'mutipart';
 
@@ -113,7 +113,7 @@ function buildDataRequest(uri, req, res, languageCode, token) {
   const [scope, matcher] = scopeService.findScope(uri, false);
   if (scope == null) {
     Logger.warn('not found any private scope', uri);
-    return returnCode(res, 404, 'URI_NOT_FOUND');
+    throw new Errors.GeneralError('URI_NOT_FOUND');
   }
   var body = req.body;
   Object.keys(req.query).forEach((queryParam) => {
