@@ -94,9 +94,7 @@ let config = {
   },
   socketIO: {},
   pubsub: {
-    channel: {
-      chat: `${Utils.getEnvStr('ENV_PUBSUB_CHANNEL_CHAT', 'MESSAGES')}`,
-    },
+    channel: 'gateway',
   },
 };
 

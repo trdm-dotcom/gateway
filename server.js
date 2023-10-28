@@ -28,12 +28,12 @@ async function initServer() {
   app.use(device.capture());
   app.use(requestHandler);
   _io.on('connection', socketHandler);
-  new RedisPubSubService().initPubSub(config.pubsub.channel.chat, (message) => {
+  new RedisPubSubService().initPubSub(config.pubsub.channel, (message) => {
     const { clientId, type, data } = message;
     if (clientId !== config.clientId) {
       return;
     }
-    _io.emit(type, { status: 200, data: data });
+    _io.emit(type, data);
   });
   http.listen(config.port, () => {
     Logger.info('Server Start!');
