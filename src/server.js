@@ -4,8 +4,8 @@ const bodyParser = require('body-parser');
 const device = require('express-device');
 const config = require('./config');
 const mongoose = require('mongoose');
-const { requestHandler } = require('./src/middlewares/RequestHandler');
-const { verifyFormat } = require('./src/middlewares/BodyFormatVerifier');
+const { requestHandler } = require('./middlewares/RequestHandler');
+const { verifyFormat } = require('./middlewares/BodyFormatVerifier');
 const { Logger } = require('common');
 const cors = require('cors');
 const http = require('http').Server(app);
@@ -13,7 +13,7 @@ const io = require('socket.io')(http, {
   cors: config.cors,
 });
 const { socketHandler } = require('./socket');
-const { RedisPubSubService } = require('./src/services/RedisPubSubService');
+const { RedisPubSubService } = require('./services/RedisPubSubService');
 
 Logger.create(config.logger.config, true);
 Logger.info('staring...');

@@ -1,6 +1,6 @@
 const { Errors, Utils } = require('common');
 const { buildDataRequest } = require('../utils/Utils');
-const config = require('../../config');
+const config = require('../config');
 const moment = require('moment');
 const { generateToken } = require('./TokenService');
 const { getInstance } = require('../services/KafkaProducerService');

@@ -2,7 +2,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const acceptLanguage = require('accept-language');
-const config = require('../../config');
+const config = require('../config');
 const i18n = require('i18next');
 acceptLanguage.languages(['en', 'vi']);
 const uuid = require('uuid');

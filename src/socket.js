@@ -1,13 +1,13 @@
 const config = require('./config');
 const { Logger, Errors } = require('common');
-const { getInstance } = require('./src/services/KafkaProducerService');
-const { getMessageId } = require('./src/middlewares/RequestHandler');
-const { getI18nInstance, def, first, getLanguageCode, checkIfValidIPV6 } = require('./src/utils/Utils');
-const { eventForwardData } = require('./src/services/ScopeService');
+const { getInstance } = require('./services/KafkaProducerService');
+const { getMessageId } = require('./middlewares/RequestHandler');
+const { getI18nInstance, def, first, getLanguageCode, checkIfValidIPV6 } = require('./utils/Utils');
+const { eventForwardData } = require('./services/ScopeService');
 const i18n = getI18nInstance();
 const device = require('device');
 const jwt = require('jsonwebtoken');
-const { convertToken } = require('./src/utils/Utils');
+const { convertToken } = require('./utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
 const { Kafka } = require('kafka-common');
 

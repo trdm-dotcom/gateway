@@ -1,6 +1,6 @@
 const { Errors, Utils, Logger } = require('common');
 const { generateJwtToken } = require('../utils/Utils');
-const config = require('../../config');
+const config = require('../config');
 const uuid = require('uuid');
 const moment = require('moment');
 const { RefreshTokeModel } = require('../model/schema/RefreshTokenSchema');

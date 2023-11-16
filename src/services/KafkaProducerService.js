@@ -1,5 +1,5 @@
 const { Kafka } = require('kafka-common');
-const config = require('../../config');
+const config = require('../config');
 
 var instance;
 

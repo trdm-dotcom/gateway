@@ -55,12 +55,12 @@ let config = {
   },
   key: {
     jwt: {
-      publicKey: './../external/key/jwt_public.key',
-      privateKey: './../external/key/jwt_private.key',
+      publicKey: './key/jwt_public.key',
+      privateKey: './key/jwt_private.key',
     },
     rsa: {
-      publicKey: './../external/key/rsa_public.key',
-      privateKey: './../external/key/rsa_private.key',
+      publicKey: './key/rsa_public.key',
+      privateKey: './key/rsa_private.key',
     },
     aes: {
       key: 'IaPON8rXjCQ5TIUVYBtcw8WKGCfcQEtc',
@@ -75,7 +75,13 @@ let config = {
       'ENV_MONGO_PORT',
       '27017'
     )}/gateway`,
-    options: {},
+    options: {
+      authSource: 'admin',
+      user: Utils.getEnvStr('ENV_MONGO_USER'),
+      pass: Utils.getEnvStr('ENV_MONGO_PASSWORD'),
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    },
   },
   redis: {
     url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST_1', 'localhost')}:${Utils.getEnvStr('ENV_REDIS_PORT_1', '6379')}`,

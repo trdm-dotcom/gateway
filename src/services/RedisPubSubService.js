@@ -1,6 +1,6 @@
-const config = require('../../config');
+const config = require('../config');
 const { createClient } = require('redis');
-const {Logger} = require("common");
+const { Logger } = require('common');
 
 const DATA_TYPE = {
   UNDEFINED: 'a',
@@ -27,7 +27,7 @@ const RedisPubSubService = class RedisPubSubService {
       Logger.error(error);
     }
   }
-  
+
   convertBackFormatDataRedis(data) {
     const type = data[0];
     let content = null;

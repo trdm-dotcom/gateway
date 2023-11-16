@@ -1,4 +1,4 @@
-const config = require('../../config');
+const config = require('../config');
 const { Errors, Logger } = require('common');
 const { getInstance } = require('../services/KafkaProducerService');
 const { refreshAccessToken, revokeToken } = require('../services/TokenService');
