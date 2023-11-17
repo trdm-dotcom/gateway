@@ -7,7 +7,7 @@ const { eventForwardData } = require('./services/ScopeService');
 const i18n = getI18nInstance();
 const device = require('device');
 const jwt = require('jsonwebtoken');
-const { convertToken } = require('./utils/Utils');
+const { convertToken, getKey } = require('./utils/Utils');
 const TOKEN_PREFIX = 'jwt ';
 const { Kafka } = require('kafka-common');
 

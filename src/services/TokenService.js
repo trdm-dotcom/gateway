@@ -4,6 +4,7 @@ const config = require('../config');
 const uuid = require('uuid');
 const moment = require('moment');
 const { RefreshTokeModel } = require('../model/schema/RefreshTokenSchema');
+const { getKey } = require('../utils/Utils');
 
 async function refreshAccessToken(req, res) {
   const invalidParams = new Errors.InvalidParameterError();

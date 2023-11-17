@@ -4,8 +4,8 @@ const { Utils } = require('common');
 const basePath = '/api/v1';
 let config = {
   clusterId: 'gateway',
-  clientId: `gateway-${Utils.getEnvNum('ENV_NODE_ID', 0)}`,
-  nodeId: Utils.getEnvNum('ENV_NODE_ID', 0),
+  clientId: `gateway-${Utils.getEnvNum('ENV_NODE_ID')}`,
+  nodeId: Utils.getEnvNum('ENV_NODE_ID'),
   kafkaUrls: Utils.getEnvArr('ENV_KAFKA_URLS'),
   kafkaCommonOptions: {},
   kafkaConsumerOptions: {},
