@@ -37,7 +37,8 @@ async function forwardRequest(event, data, socket, languageCode) {
   const accessToken = authorizationHeader.substr(TOKEN_PREFIX.length).trim();
   var payload;
   try {
-    payload = jwt.verify(accessToken, _jwtPrvKey, { algorithms: 'RS256' });
+    const prvKey = getKey(config.key.jwt.privateKey);
+    payload = jwt.verify(accessToken, prvKey, { algorithms: 'RS256' });
   } catch (error) {
     Logger.warn('unauthorized ', socket.id);
     return returnCode(socket, event.eventClient.toLowerCase(), 401, 'UNAUTHORIZED');

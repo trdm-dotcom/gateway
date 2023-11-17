@@ -6,7 +6,7 @@ let config = {
   clusterId: 'gateway',
   clientId: `gateway-${Utils.getEnvNum('ENV_NODE_ID', 0)}`,
   nodeId: Utils.getEnvNum('ENV_NODE_ID', 0),
-  kafkaUrls: Utils.getEnvArr('ENV_KAFKA_URLS', ['localhost:9092']),
+  kafkaUrls: Utils.getEnvArr('ENV_KAFKA_URLS'),
   kafkaCommonOptions: {},
   kafkaConsumerOptions: {},
   kafkaProducerOptions: {},
@@ -71,10 +71,7 @@ let config = {
   port: 3000,
   timeout: 20000, // Seconds
   mongo: {
-    url: `mongodb://${Utils.getEnvStr('ENV_MONGO_HOST', 'localhost')}:${Utils.getEnvStr(
-      'ENV_MONGO_PORT',
-      '27017'
-    )}/gateway`,
+    url: `mongodb://${Utils.getEnvStr('ENV_MONGO_HOST')}:${Utils.getEnvStr('ENV_MONGO_PORT')}/gateway`,
     options: {
       authSource: 'admin',
       user: Utils.getEnvStr('ENV_MONGO_USER'),
@@ -84,15 +81,15 @@ let config = {
     },
   },
   redis: {
-    url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST_1', 'localhost')}:${Utils.getEnvStr('ENV_REDIS_PORT_1', '6379')}`,
+    url: `redis://${Utils.getEnvStr('ENV_REDIS_HOST')}:${Utils.getEnvStr('ENV_REDIS_PORT')}`,
   },
   accessToken: {
     expiredInSeconds: 900, // Seconds
-    issuer: 'do-an',
+    issuer: 'fotei',
   },
   refreshToken: {
-    expiredInSeconds: 604800, // Seconds
-    expiredInSecondsWithRememberMe: 2592000, // Seconds
+    expiredInSeconds: 31536000, // Seconds
+    expiredInSecondsWithRememberMe: 315360000, // Seconds
   },
   isEnableBiometric: true,
   login: {

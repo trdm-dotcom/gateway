@@ -79,7 +79,8 @@ async function checkToken(messageId, languageCode, uri, req, res) {
   accessToken = accessToken.substr(TOKEN_PREFIX.length).trim();
   var payload;
   try {
-    payload = jwt.verify(accessToken, _jwtPrvKey, { algorithms: 'RS256' });
+    const prvKey = getKey(config.key.jwt.privateKey);
+    payload = jwt.verify(accessToken, prvKey, { algorithms: 'RS256' });
   } catch {
     Logger.warn(messageId, 'unauthorized ', uri);
     return returnCode(res, 401, 'UNAUTHORIZED');

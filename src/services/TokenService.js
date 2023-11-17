@@ -32,7 +32,8 @@ async function refreshAccessToken(req, res) {
     appV: rf.extendData.appV,
   };
   const accExpiredTime = moment().add(config.accessToken.expiredInSeconds, 'second').valueOf();
-  const token = generateJwtToken(accessTokenData, _jwtPrvKey);
+  const prvKey = getKey(config.key.jwt.privateKey);
+  const token = generateJwtToken(accessTokenData, prvKey);
   return res.status(200).send({ accessToken: token, accExpiredTime: accExpiredTime });
 }
 
@@ -61,7 +62,8 @@ async function generateToken(grantType, userId, refreshTokenTtl, userData, sourc
   Logger.info(`generate token ${JSON.stringify(accessTokenData)}`);
   const refreshToken = await createRefreshToken(userId, refreshTokenTtl, sourceIp, deviceType, accessTokenData);
   accessTokenData.rId = refreshToken.id;
-  let accessToken = generateJwtToken(accessTokenData, _jwtPrvKey);
+  const prvKey = getKey(config.key.jwt.privateKey);
+  const accessToken = generateJwtToken(accessTokenData, prvKey);
   Logger.warn('generated token ', accessTokenData.rId, refreshToken.token, accessToken);
   return {
     accessToken,

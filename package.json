@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "copyKeys": "cp -R key src/key",
     "start": "node src/index.js"
   },
   "keywords": [],

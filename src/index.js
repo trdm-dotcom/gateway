@@ -5,8 +5,6 @@ const { getKey } = require('./utils/Utils');
 const config = require('./config');
 const { initKafka } = require('./services/KafkaProducerService');
 
-// global._jwtPrvKey = getKey(config.key.jwt.privateKey);
-
 async function run() {
   await initServer();
   await init();
